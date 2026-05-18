@@ -1,0 +1,105 @@
+{
+  "lockfileVersion": 1,
+  "configVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "sshift",
+      "dependencies": {
+        "@inquirer/prompts": "^7.0.0",
+        "chalk": "^5.3.0",
+        "cli-table3": "^0.6.0",
+        "commander": "^12.0.0",
+        "smol-toml": "^1.3.0",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "typescript": "^5.5.0",
+      },
+    },
+  },
+  "packages": {
+    "@colors/colors": ["@colors/colors@1.5.0", "http://registry.m.jd.com/@colors/colors/download/@colors/colors-1.5.0.tgz", {}, "sha1-u1BFecHK6SPmV2pPXaQ9Jfl729k="],
+
+    "@inquirer/ansi": ["@inquirer/ansi@1.0.2", "http://registry.m.jd.com/@inquirer/ansi/download/@inquirer/ansi-1.0.2.tgz", {}, "sha1-Z0pMTYGtRgaVyyofxp14zRh/M34="],
+
+    "@inquirer/checkbox": ["@inquirer/checkbox@4.3.2", "http://registry.m.jd.com/@inquirer/checkbox/download/@inquirer/checkbox-4.3.2.tgz", { "dependencies": { "@inquirer/ansi": "^1.0.2", "@inquirer/core": "^10.3.2", "@inquirer/figures": "^1.0.15", "@inquirer/type": "^3.0.10", "yoctocolors-cjs": "^2.1.3" }, "peerDependencies": { "@types/node": ">=18" } }, "sha1-4Ug+ZRnW/++XKBpU0qW6oNgbPzs="],
+
+    "@inquirer/confirm": ["@inquirer/confirm@5.1.21", "http://registry.m.jd.com/@inquirer/confirm/download/@inquirer/confirm-5.1.21.tgz", { "dependencies": { "@inquirer/core": "^10.3.2", "@inquirer/type": "^3.0.10" }, "peerDependencies": { "@types/node": ">=18" } }, "sha1-YQxKzXeX2UiQpuLd4smOseiR3RI="],
+
+    "@inquirer/core": ["@inquirer/core@10.3.2", "http://registry.m.jd.com/@inquirer/core/download/@inquirer/core-10.3.2.tgz", { "dependencies": { "@inquirer/ansi": "^1.0.2", "@inquirer/figures": "^1.0.15", "@inquirer/type": "^3.0.10", "cli-width": "^4.1.0", "mute-stream": "^2.0.0", "signal-exit": "^4.1.0", "wrap-ansi": "^6.2.0", "yoctocolors-cjs": "^2.1.3" }, "peerDependencies": { "@types/node": ">=18" } }, "sha1-U1l5/z/0/h58xPg+IyBQTHQ7fiA="],
+
+    "@inquirer/editor": ["@inquirer/editor@4.2.23", "http://registry.m.jd.com/@inquirer/editor/download/@inquirer/editor-4.2.23.tgz", { "dependencies": { "@inquirer/core": "^10.3.2", "@inquirer/external-editor": "^1.0.3", "@inquirer/type": "^3.0.10" }, "peerDependencies": { "@types/node": ">=18" } }, "sha1-/gRqO/2ukxJi3pjBBSQ315QyLgs="],
+
+    "@inquirer/expand": ["@inquirer/expand@4.0.23", "http://registry.m.jd.com/@inquirer/expand/download/@inquirer/expand-4.0.23.tgz", { "dependencies": { "@inquirer/core": "^10.3.2", "@inquirer/type": "^3.0.10", "yoctocolors-cjs": "^2.1.3" }, "peerDependencies": { "@types/node": ">=18" } }, "sha1-o4tfMiJtdXF8Nwvf7XkjE7kr3AU="],
+
+    "@inquirer/external-editor": ["@inquirer/external-editor@1.0.3", "http://registry.m.jd.com/@inquirer/external-editor/download/@inquirer/external-editor-1.0.3.tgz", { "dependencies": { "chardet": "^2.1.1", "iconv-lite": "^0.7.0" }, "peerDependencies": { "@types/node": ">=18" } }, "sha1-wjmIKR7mdikP2rP9MG5kAQptE7g="],
+
+    "@inquirer/figures": ["@inquirer/figures@1.0.15", "http://registry.m.jd.com/@inquirer/figures/download/@inquirer/figures-1.0.15.tgz", {}, "sha1-27Se2A3xHfdCaAI7SWrF2azSKzo="],
+
+    "@inquirer/input": ["@inquirer/input@4.3.1", "http://registry.m.jd.com/@inquirer/input/download/@inquirer/input-4.3.1.tgz", { "dependencies": { "@inquirer/core": "^10.3.2", "@inquirer/type": "^3.0.10" }, "peerDependencies": { "@types/node": ">=18" } }, "sha1-d4aDtMTE2V0F1LBcSoVJZLc1ZbQ="],
+
+    "@inquirer/number": ["@inquirer/number@3.0.23", "http://registry.m.jd.com/@inquirer/number/download/@inquirer/number-3.0.23.tgz", { "dependencies": { "@inquirer/core": "^10.3.2", "@inquirer/type": "^3.0.10" }, "peerDependencies": { "@types/node": ">=18" } }, "sha1-P97CVA1kIJP9dSaBj9jUvcczUJQ="],
+
+    "@inquirer/password": ["@inquirer/password@4.0.23", "http://registry.m.jd.com/@inquirer/password/download/@inquirer/password-4.0.23.tgz", { "dependencies": { "@inquirer/ansi": "^1.0.2", "@inquirer/core": "^10.3.2", "@inquirer/type": "^3.0.10" }, "peerDependencies": { "@types/node": ">=18" } }, "sha1-ufUYfIyS/Xqp7Oudjy6tDX57AA0="],
+
+    "@inquirer/prompts": ["@inquirer/prompts@7.10.1", "http://registry.m.jd.com/@inquirer/prompts/download/@inquirer/prompts-7.10.1.tgz", { "dependencies": { "@inquirer/checkbox": "^4.3.2", "@inquirer/confirm": "^5.1.21", "@inquirer/editor": "^4.2.23", "@inquirer/expand": "^4.0.23", "@inquirer/input": "^4.3.1", "@inquirer/number": "^3.0.23", "@inquirer/password": "^4.0.23", "@inquirer/rawlist": "^4.1.11", "@inquirer/search": "^3.2.2", "@inquirer/select": "^4.4.2" }, "peerDependencies": { "@types/node": ">=18" } }, "sha1-4UNsBITPBMIlSMdOLNI56YnV+Ec="],
+
+    "@inquirer/rawlist": ["@inquirer/rawlist@4.1.11", "http://registry.m.jd.com/@inquirer/rawlist/download/@inquirer/rawlist-4.1.11.tgz", { "dependencies": { "@inquirer/core": "^10.3.2", "@inquirer/type": "^3.0.10", "yoctocolors-cjs": "^2.1.3" }, "peerDependencies": { "@types/node": ">=18" } }, "sha1-MTyMP/zLfUHpkMYGRlcmtKiYoDM="],
+
+    "@inquirer/search": ["@inquirer/search@3.2.2", "http://registry.m.jd.com/@inquirer/search/download/@inquirer/search-3.2.2.tgz", { "dependencies": { "@inquirer/core": "^10.3.2", "@inquirer/figures": "^1.0.15", "@inquirer/type": "^3.0.10", "yoctocolors-cjs": "^2.1.3" }, "peerDependencies": { "@types/node": ">=18" } }, "sha1-TMb9V03NQ05DmbrcN8dCw/1TSsg="],
+
+    "@inquirer/select": ["@inquirer/select@4.4.2", "http://registry.m.jd.com/@inquirer/select/download/@inquirer/select-4.4.2.tgz", { "dependencies": { "@inquirer/ansi": "^1.0.2", "@inquirer/core": "^10.3.2", "@inquirer/figures": "^1.0.15", "@inquirer/type": "^3.0.10", "yoctocolors-cjs": "^2.1.3" }, "peerDependencies": { "@types/node": ">=18" } }, "sha1-Ksj8qWCRPxjx0bNTI+2PzSfYkyM="],
+
+    "@inquirer/type": ["@inquirer/type@3.0.10", "http://registry.m.jd.com/@inquirer/type/download/@inquirer/type-3.0.10.tgz", { "peerDependencies": { "@types/node": ">=18" } }, "sha1-Ee1WTseEMqIA6iYBohLSSvgVDVA="],
+
+    "@types/bun": ["@types/bun@1.3.12", "http://registry.m.jd.com/@types/bun/download/@types/bun-1.3.12.tgz", { "dependencies": { "bun-types": "1.3.12" } }, "sha1-KCg1FQDSH9ZWzNH8QVeaNTA99vY="],
+
+    "@types/node": ["@types/node@25.8.0", "http://registry.m.jd.com/@types/node/download/@types/node-25.8.0.tgz", { "dependencies": { "undici-types": ">=7.24.0 <7.24.7" } }, "sha1-0TAzOX0cGGh2vtTJudfz+WIJfrM="],
+
+    "ansi-regex": ["ansi-regex@5.0.1", "http://registry.m.jd.com/ansi-regex/download/ansi-regex-5.0.1.tgz", {}, "sha1-CCyyyJyf6GWaMRpTvWpNxTAdswQ="],
+
+    "ansi-styles": ["ansi-styles@4.3.0", "http://registry.m.jd.com/ansi-styles/download/ansi-styles-4.3.0.tgz", { "dependencies": { "color-convert": "^2.0.1" } }, "sha1-7dgDYornHATIWuegkG7a00tkiTc="],
+
+    "bun-types": ["bun-types@1.3.12", "http://registry.m.jd.com/bun-types/download/bun-types-1.3.12.tgz", { "dependencies": { "@types/node": "*" } }, "sha1-I2RFg2QUsaMoRT2otXHi7U0lfJ8="],
+
+    "chalk": ["chalk@5.6.2", "http://registry.m.jd.com/chalk/download/chalk-5.6.2.tgz", {}, "sha1-sSOLbiPqM3r3HH+KKV21rwwViuo="],
+
+    "chardet": ["chardet@2.1.1", "http://registry.m.jd.com/chardet/download/chardet-2.1.1.tgz", {}, "sha1-XHVZNwSmQvce5TcX3yNAMeZTc8g="],
+
+    "cli-table3": ["cli-table3@0.6.5", "http://registry.m.jd.com/cli-table3/download/cli-table3-0.6.5.tgz", { "dependencies": { "string-width": "^4.2.0" }, "optionalDependencies": { "@colors/colors": "1.5.0" } }, "sha1-ATuRNRdic5wWqVZ8IaBGMuRJvy8="],
+
+    "cli-width": ["cli-width@4.1.0", "http://registry.m.jd.com/cli-width/download/cli-width-4.1.0.tgz", {}, "sha1-QtqsQdPCVO84rYrAN2chMBc2kcU="],
+
+    "color-convert": ["color-convert@2.0.1", "http://registry.m.jd.com/color-convert/download/color-convert-2.0.1.tgz", { "dependencies": { "color-name": "~1.1.4" } }, "sha1-ctOmjVmMm9s68q0ehPIdiWq9TeM="],
+
+    "color-name": ["color-name@1.1.4", "http://registry.m.jd.com/color-name/download/color-name-1.1.4.tgz", {}, "sha1-wqCah6y95pVD3m9j+jmVyCbFNqI="],
+
+    "commander": ["commander@12.1.0", "http://registry.m.jd.com/commander/download/commander-12.1.0.tgz", {}, "sha1-AUI7NvUBJZ/arE0OTWDJbJkVhdM="],
+
+    "emoji-regex": ["emoji-regex@8.0.0", "http://registry.m.jd.com/emoji-regex/download/emoji-regex-8.0.0.tgz", {}, "sha1-6Bj9ac5cz8tARZT4QpY79TFkzDc="],
+
+    "iconv-lite": ["iconv-lite@0.7.2", "http://registry.m.jd.com/iconv-lite/download/iconv-lite-0.7.2.tgz", { "dependencies": { "safer-buffer": ">= 2.1.2 < 3.0.0" } }, "sha1-0L3qw/ErSDW3NZwq2JxCKk0cxy4="],
+
+    "is-fullwidth-code-point": ["is-fullwidth-code-point@3.0.0", "http://registry.m.jd.com/is-fullwidth-code-point/download/is-fullwidth-code-point-3.0.0.tgz", {}, "sha1-8Rb4Bk/pCz94RKOJl8C3UFEmnx0="],
+
+    "mute-stream": ["mute-stream@2.0.0", "http://registry.m.jd.com/mute-stream/download/mute-stream-2.0.0.tgz", {}, "sha1-pURvwMUStxyDxE2QjVx7e0xJOys="],
+
+    "safer-buffer": ["safer-buffer@2.1.2", "http://registry.m.jd.com/safer-buffer/download/safer-buffer-2.1.2.tgz", {}, "sha1-RPoWGwGHuVSd2Eu5GAL5vYOFzWo="],
+
+    "signal-exit": ["signal-exit@4.1.0", "http://registry.m.jd.com/signal-exit/download/signal-exit-4.1.0.tgz", {}, "sha1-lSGIwcvVRgcOLdIND0HArgUwywQ="],
+
+    "smol-toml": ["smol-toml@1.6.1", "http://registry.m.jd.com/smol-toml/download/smol-toml-1.6.1.tgz", {}, "sha1-T86198S4bCVEAk72huEv8Jg0Zb4="],
+
+    "string-width": ["string-width@4.2.3", "http://registry.m.jd.com/string-width/download/string-width-4.2.3.tgz", { "dependencies": { "emoji-regex": "^8.0.0", "is-fullwidth-code-point": "^3.0.0", "strip-ansi": "^6.0.1" } }, "sha1-JpxxF9J7Ba0uU2gwqOyJXvnG0BA="],
+
+    "strip-ansi": ["strip-ansi@6.0.1", "http://registry.m.jd.com/strip-ansi/download/strip-ansi-6.0.1.tgz", { "dependencies": { "ansi-regex": "^5.0.1" } }, "sha1-nibGPTD1NEPpSJSVshBdN7Z6hdk="],
+
+    "typescript": ["typescript@5.9.3", "http://registry.m.jd.com/typescript/download/typescript-5.9.3.tgz", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha1-W09Z4VMQqxeiFvXWz1PuR27eZw8="],
+
+    "undici-types": ["undici-types@7.24.6", "http://registry.m.jd.com/undici-types/download/undici-types-7.24.6.tgz", {}, "sha1-YSdbSF1/1OnSacfPBOwoc8nMD5E="],
+
+    "wrap-ansi": ["wrap-ansi@6.2.0", "http://registry.m.jd.com/wrap-ansi/download/wrap-ansi-6.2.0.tgz", { "dependencies": { "ansi-styles": "^4.0.0", "string-width": "^4.1.0", "strip-ansi": "^6.0.0" } }, "sha1-6Tk7oHEC5skaOyIUePAlfNKFblM="],
+
+    "yoctocolors-cjs": ["yoctocolors-cjs@2.1.3", "http://registry.m.jd.com/yoctocolors-cjs/download/yoctocolors-cjs-2.1.3.tgz", {}, "sha1-fklk6o7EIrekCskX06NEz9IwS6o="],
+  }
+}

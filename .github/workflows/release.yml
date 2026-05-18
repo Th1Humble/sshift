@@ -1,0 +1,84 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release tag, for example v0.1.0"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Test
+        run: bun test
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Build release artifacts
+        env:
+          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          version="${RELEASE_TAG}"
+          mkdir -p dist/release
+
+          build_one() {
+            local target="$1"
+            local name="$2"
+            local outfile="dist/release/${name}/sshift"
+
+            mkdir -p "dist/release/${name}"
+            bun build ./src/index.ts --compile --target="${target}" --outfile="${outfile}"
+            tar -C "dist/release/${name}" -czf "dist/release/${name}.tar.gz" sshift
+          }
+
+          build_one "bun-darwin-arm64" "sshift-${version}-darwin-arm64"
+          build_one "bun-darwin-x64" "sshift-${version}-darwin-x64"
+          build_one "bun-linux-arm64" "sshift-${version}-linux-arm64"
+          build_one "bun-linux-x64-baseline" "sshift-${version}-linux-x64"
+
+          cd dist/release
+          sha256sum *.tar.gz > checksums.txt
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
+            gh release upload "${RELEASE_TAG}" dist/release/*.tar.gz dist/release/checksums.txt --clobber
+          else
+            gh release create "${RELEASE_TAG}" \
+              dist/release/*.tar.gz \
+              dist/release/checksums.txt \
+              --title "${RELEASE_TAG}" \
+              --generate-notes
+          fi
