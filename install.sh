@@ -4,7 +4,7 @@ set -eu
 REPO="Th1Humble/sshift"
 BIN_NAME="sshift"
 INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
-# Optional: set SSHIFT_VERSION=v0.1.0 to install a specific release.
+# Optional: set SSHIFT_VERSION=v0.1.2 to install a specific release.
 
 os="$(uname -s | tr '[:upper:]' '[:lower:]')"
 arch="$(uname -m)"
@@ -33,6 +33,14 @@ trap 'rm -rf "$tmp_dir"' EXIT
 tag="${SSHIFT_VERSION:-}"
 
 if [ -z "$tag" ]; then
+  latest_url="https://github.com/${REPO}/releases/latest"
+  tag="$(
+    curl -fsSL -o /dev/null -w '%{url_effective}' "$latest_url" \
+      | sed 's#.*/tag/##'
+  )"
+fi
+
+if [ -z "$tag" ] || [ "$tag" = "latest" ]; then
   api_url="https://api.github.com/repos/${REPO}/releases/latest"
   tag="$(curl -fsSL "$api_url" | sed -n 's/.*"tag_name": *"\([^"]*\)".*/\1/p' | head -n 1)"
 fi

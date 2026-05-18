@@ -9,13 +9,14 @@ import { profileListCommand } from "./commands/profile-list";
 import { profileRemoveCommand } from "./commands/profile-rm";
 import { rollbackCommand } from "./commands/rollback";
 import { scanCommand } from "./commands/scan";
+import { CLI_VERSION } from "./version";
 
 const program = new Command();
 
 program
   .name("sshift")
   .description("Use the right SSH key for every Git repo.")
-  .version("0.1.0");
+  .version(CLI_VERSION);
 
 program
   .command("add")
