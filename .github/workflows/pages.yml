@@ -35,6 +35,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p _site
+          cp site/index.html _site/index.html
           cp install.sh _site/install.sh
 
       - name: Upload Pages artifact
