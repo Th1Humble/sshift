@@ -1,6 +1,7 @@
 import { confirm } from "@inquirer/prompts";
 import { setLocalGitIdentity } from "../core/git-config";
 import { loadProfiles } from "../core/profiles";
+import { formatKeyValue, statusOk } from "../utils/output";
 
 interface BindOptions {
   yes?: boolean;
@@ -19,8 +20,8 @@ export async function bindCommand(profileName: string, options: BindOptions): Pr
   }
 
   console.log(`This will set the current repository Git identity to:`);
-  console.log(`  user.name:  ${profile.git_name}`);
-  console.log(`  user.email: ${profile.git_email}`);
+  console.log(formatKeyValue("user.name", profile.git_name));
+  console.log(formatKeyValue("user.email", profile.git_email));
 
   const shouldBind =
     options.yes ??
@@ -35,5 +36,5 @@ export async function bindCommand(profileName: string, options: BindOptions): Pr
   }
 
   await setLocalGitIdentity({ name: profile.git_name, email: profile.git_email });
-  console.log(`Bound current repository to profile: ${profile.name}`);
+  console.log(statusOk(`Bound current repository to profile: ${profile.name}`));
 }

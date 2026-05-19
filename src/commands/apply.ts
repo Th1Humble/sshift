@@ -6,6 +6,7 @@ import {
   detectUnmanagedHostConflicts,
   renderManagedBlock,
 } from "../core/ssh-config";
+import { formatKeyValue, statusOk, statusWarning } from "../utils/output";
 import { sshConfigPath } from "../utils/paths";
 
 interface ApplyOptions {
@@ -25,7 +26,7 @@ export async function applyCommand(options: ApplyOptions): Promise<void> {
   }
 
   if (conflicts.length > 0) {
-    console.log("Warning: unmanaged SSH config already contains matching Host entries:");
+    console.log(statusWarning("Warning: unmanaged SSH config already contains matching Git host entries:"));
     for (const conflict of conflicts) {
       console.log(`  - ${conflict}`);
     }
@@ -50,6 +51,6 @@ export async function applyCommand(options: ApplyOptions): Promise<void> {
 
   const backup = await applyProfilesToSshConfig(store.profiles, "sshift apply");
 
-  console.log(`Applied ${store.profiles.length} profile(s) to SSH config.`);
-  console.log(`Backup: ${backup.file_path}`);
+  console.log(statusOk(`Applied ${store.profiles.length} profile(s) to SSH config.`));
+  console.log(formatKeyValue("Backup", backup.file_path));
 }

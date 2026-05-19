@@ -1,6 +1,7 @@
 import { confirm } from "@inquirer/prompts";
 import { loadProfiles, removeProfile } from "../core/profiles";
 import { applyProfilesToSshConfig } from "../core/ssh-config";
+import { formatKeyValue, statusOk } from "../utils/output";
 
 interface ProfileRemoveOptions {
   yes?: boolean;
@@ -36,7 +37,7 @@ export async function profileRemoveCommand(
     `profile remove ${name}`,
   );
 
-  console.log(`Removed profile: ${name}`);
-  console.log(`SSH key left untouched: ${profile.identity_file}`);
-  console.log(`Backup: ${backup.file_path}`);
+  console.log(statusOk(`Removed profile: ${name}`));
+  console.log(formatKeyValue("Key kept", profile.identity_file));
+  console.log(formatKeyValue("Backup", backup.file_path));
 }

@@ -48,13 +48,13 @@ curl -fsSL https://th1humble.github.io/sshift/install.sh | INSTALL_DIR=/usr/loca
 指定版本安装：
 
 ```bash
-curl -fsSL https://th1humble.github.io/sshift/install.sh | SSHIFT_VERSION=v0.1.3 sh
+curl -fsSL https://th1humble.github.io/sshift/install.sh | SSHIFT_VERSION=v0.1.4 sh
 ```
 
 也可以从 [GitHub Releases](https://github.com/Th1Humble/sshift/releases) 下载独立二进制：
 
 ```bash
-tar -xzf sshift-v0.1.3-darwin-arm64.tar.gz
+tar -xzf sshift-v0.1.4-darwin-arm64.tar.gz
 chmod +x sshift
 sudo mv sshift /usr/local/bin/sshift
 ```
@@ -72,6 +72,30 @@ sshift scan
 cd ~/my-project
 sshift doctor
 ```
+
+## Host 是什么
+
+在 SSH config 里，`Host` 是 OpenSSH 用来匹配 Git remote URL 的名字。
+
+```text
+git@github.com:owner/repo.git
+    └───────── Git host: github.com
+```
+
+大多数场景下，`Host` 和 `HostName` 是一样的：
+
+```sshconfig
+Host github.com
+  HostName github.com
+  User git
+  IdentityFile ~/.ssh/id_ed25519_github
+  IdentitiesOnly yes
+```
+
+- `Host` / Git host：SSH clone 地址里的主机部分
+- `HostName`：OpenSSH 真正连接的服务器地址
+- `IdentityFile`：这个 host 使用的 SSH key
+- `IdentitiesOnly yes`：避免 OpenSSH 继续尝试无关的 key
 
 ## 命令一览
 
@@ -209,7 +233,26 @@ sshift profile rm github-com-th1humble --yes   # 跳过确认
 
 从零开始，没有任何 SSH key：
 
+```mermaid
+flowchart TD
+  A["安装 sshift"] --> B["运行 sshift add"]
+  B --> C["选择 Git host"]
+  C --> D["生成或选择 SSH key"]
+  D --> E["复制公钥到 Git 平台"]
+  E --> F{"继续添加身份？"}
+  F -- 是 --> C
+  F -- 否 --> G["应用受管理的 SSH config"]
+  G --> H["运行 sshift scan"]
+  H --> I["正常使用 git clone"]
+```
+
 ```bash
+# 1. 安装
+curl -fsSL https://th1humble.github.io/sshift/install.sh | sh
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+
+# 2. 添加一个或多个 Git 身份
 sshift add
 # → 选择 GitHub，输入账号，生成 key
 # → 复制打印出的公钥到 GitHub Settings → SSH Keys
@@ -219,25 +262,45 @@ sshift add
 # → "是否继续添加？" → 否
 # → 应用受管理的 SSH config 块
 
-# 验证
-sshift doctor
+# 3. 验证本机路由
+sshift scan
+
+# 4. 正常使用 Git
+git clone git@github.com:owner/repo.git
 ```
 
 ### 已有工作电脑
 
 你已经有公司的 SSH key 和 Git 配置，想增加个人 GitHub 身份而不破坏现有配置：
 
+```mermaid
+flowchart TD
+  A["运行 sshift scan"] --> B["查看已有 SSH key 和 Git host"]
+  B --> C["运行 sshift add"]
+  C --> D["添加缺失的个人/工作身份"]
+  D --> E["预览受管理的 SSH config 块"]
+  E --> F{"是否与已有非受管理 Host 冲突？"}
+  F -- 否 --> G["应用"]
+  F -- 是 --> H["先停下，用 sshift apply --preview 检查"]
+  G --> I["在各个仓库运行 sshift doctor"]
+  H --> I
+```
+
 ```bash
-# 查看当前配置
+# 1. 查看当前配置
 sshift scan
 
-# 添加 GitHub 身份
+# 2. 添加缺失的身份
 sshift add
 # → sshift 先展示已有 profile
 # → 添加 GitHub profile 和新 key
-# → sshift 只写入自己的受管理块，不动你已有的配置
+# → 复制打印出的公钥到 Git 平台
+# → 应用前预览受管理的 SSH config 块
 
-# 验证两边都正常
+# 3. 如果不确定，先只预览，不写入
+sshift apply --preview
+
+# 4. 在真实仓库里诊断
 cd ~/work-project && sshift doctor
 cd ~/personal-project && sshift doctor
 ```

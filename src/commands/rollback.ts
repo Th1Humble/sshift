@@ -1,5 +1,6 @@
 import { confirm } from "@inquirer/prompts";
 import { latestBackup, restoreBackup } from "../core/backup";
+import { formatKeyValue, statusOk } from "../utils/output";
 
 interface RollbackOptions {
   backup?: string;
@@ -27,5 +28,6 @@ export async function rollbackCommand(options: RollbackOptions): Promise<void> {
   }
 
   await restoreBackup(backup);
-  console.log(`Restored SSH config from: ${backup}`);
+  console.log(statusOk("Restored SSH config."));
+  console.log(formatKeyValue("Backup", backup));
 }

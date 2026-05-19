@@ -33,7 +33,10 @@ export async function buildProfile(options: ProfileAddOptions): Promise<Profile>
     options.hostname ??
     options.host ??
     template?.hostname ??
-    (await input({ message: "Git SSH hostname", required: true }));
+    (await input({
+      message: "Git SSH hostname (from git@HOST:owner/repo.git, e.g. github.com)",
+      required: true,
+    }));
   const host = options.host ?? template?.host ?? hostname;
   const user = options.user ?? template?.user ?? "git";
   const name = options.name ?? defaultProfileName(host, account);

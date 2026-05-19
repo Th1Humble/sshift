@@ -48,13 +48,13 @@ curl -fsSL https://th1humble.github.io/sshift/install.sh | INSTALL_DIR=/usr/loca
 To pin a version:
 
 ```bash
-curl -fsSL https://th1humble.github.io/sshift/install.sh | SSHIFT_VERSION=v0.1.3 sh
+curl -fsSL https://th1humble.github.io/sshift/install.sh | SSHIFT_VERSION=v0.1.4 sh
 ```
 
 Or download a standalone binary from [GitHub Releases](https://github.com/Th1Humble/sshift/releases):
 
 ```bash
-tar -xzf sshift-v0.1.3-darwin-arm64.tar.gz
+tar -xzf sshift-v0.1.4-darwin-arm64.tar.gz
 chmod +x sshift
 sudo mv sshift /usr/local/bin/sshift
 ```
@@ -72,6 +72,30 @@ sshift scan
 cd ~/my-project
 sshift doctor
 ```
+
+## Host Terminology
+
+In SSH config, `Host` is the name OpenSSH matches from your Git remote URL.
+
+```text
+git@github.com:owner/repo.git
+    └───────── Git host: github.com
+```
+
+For most setups, `Host` and `HostName` are the same:
+
+```sshconfig
+Host github.com
+  HostName github.com
+  User git
+  IdentityFile ~/.ssh/id_ed25519_github
+  IdentitiesOnly yes
+```
+
+- `Host` / Git host: the host part from your SSH clone URL
+- `HostName`: the real server OpenSSH connects to
+- `IdentityFile`: the SSH key OpenSSH uses for that host
+- `IdentitiesOnly yes`: prevents OpenSSH from trying unrelated keys
 
 ## Commands
 
@@ -209,7 +233,26 @@ sshift profile rm github-com-th1humble --yes   # skip confirmation
 
 Starting from scratch with no SSH keys configured:
 
+```mermaid
+flowchart TD
+  A["Install sshift"] --> B["Run sshift add"]
+  B --> C["Choose Git host"]
+  C --> D["Generate or select SSH key"]
+  D --> E["Copy public key to Git host"]
+  E --> F{"Add another identity?"}
+  F -- Yes --> C
+  F -- No --> G["Apply managed SSH config"]
+  G --> H["Run sshift scan"]
+  H --> I["Use git clone normally"]
+```
+
 ```bash
+# 1. Install
+curl -fsSL https://th1humble.github.io/sshift/install.sh | sh
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+
+# 2. Add one or more Git identities
 sshift add
 # → Choose GitHub, enter account, generate key
 # → Copy the printed public key to GitHub Settings → SSH Keys
@@ -219,25 +262,45 @@ sshift add
 # → Choose "Add another?" → No
 # → Apply managed SSH config block
 
-# Verify
-sshift doctor
+# 3. Verify local routing
+sshift scan
+
+# 4. Clone and use Git normally
+git clone git@github.com:owner/repo.git
 ```
 
 ### Existing Work Computer
 
 You already have a company SSH key and Git config. You want to add a personal GitHub identity without breaking anything:
 
+```mermaid
+flowchart TD
+  A["Run sshift scan"] --> B["Review existing SSH keys and Git hosts"]
+  B --> C["Run sshift add"]
+  C --> D["Add the missing personal/work identity"]
+  D --> E["Preview managed SSH config block"]
+  E --> F{"Conflicts with existing unmanaged Host?"}
+  F -- No --> G["Apply"]
+  F -- Yes --> H["Stop and inspect with sshift apply --preview"]
+  G --> I["Run sshift doctor in each repo"]
+  H --> I
+```
+
 ```bash
-# See what's already configured
+# 1. See what's already configured
 sshift scan
 
-# Add GitHub identity
+# 2. Add the missing identity
 sshift add
 # → sshift shows your existing profiles first
 # → Add GitHub profile with a new key
-# → sshift writes ONLY its managed block, leaving your existing config untouched
+# → Copy the printed public key to the Git host
+# → Preview the managed SSH config block before applying
 
-# Verify both work
+# 3. If you are unsure, preview without writing
+sshift apply --preview
+
+# 4. Diagnose real repositories
 cd ~/work-project && sshift doctor
 cd ~/personal-project && sshift doctor
 ```

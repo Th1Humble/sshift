@@ -6,6 +6,7 @@ import {
 } from "../core/doctor";
 import { readGlobalGitIdentity, readLocalGitIdentity } from "../core/git-config";
 import { loadProfiles } from "../core/profiles";
+import { formatKeyValue, statusError, statusOk, statusWarning } from "../utils/output";
 import { runCommand } from "../utils/shell";
 
 export async function doctorCommand(): Promise<void> {
@@ -26,8 +27,8 @@ export async function doctorCommand(): Promise<void> {
   ]);
 
   console.log(chalk.bold("Repository"));
-  console.log(`  origin: ${remoteUrl}`);
-  console.log(`  host:   ${diagnosis.remote_host ?? "(not an SSH remote)"}`);
+  console.log(formatKeyValue("origin", remoteUrl));
+  console.log(formatKeyValue("Git host", diagnosis.remote_host ?? "(not an SSH remote)"));
   console.log("");
 
   console.log(chalk.bold("Matched Profile"));
@@ -36,21 +37,21 @@ export async function doctorCommand(): Promise<void> {
     return;
   }
 
-  console.log(`  name: ${diagnosis.profile.name}`);
-  console.log(`  key:  ${diagnosis.profile.identity_file}`);
-  console.log(`  git:  ${diagnosis.profile.git_name ?? "(unset)"} <${diagnosis.profile.git_email ?? "(unset)"}>`);
+  console.log(formatKeyValue("name", diagnosis.profile.name));
+  console.log(formatKeyValue("key", diagnosis.profile.identity_file));
+  console.log(formatKeyValue("git", `${diagnosis.profile.git_name ?? "(unset)"} <${diagnosis.profile.git_email ?? "(unset)"}>`));
   console.log("");
 
   console.log(chalk.bold("Git Identity"));
-  console.log(`  local:  ${localGitIdentity.name ?? "(unset)"} <${localGitIdentity.email ?? "(unset)"}>`);
-  console.log(`  global: ${globalGitIdentity.name ?? "(unset)"} <${globalGitIdentity.email ?? "(unset)"}>`);
+  console.log(formatKeyValue("local", `${localGitIdentity.name ?? "(unset)"} <${localGitIdentity.email ?? "(unset)"}>`));
+  console.log(formatKeyValue("global", `${globalGitIdentity.name ?? "(unset)"} <${globalGitIdentity.email ?? "(unset)"}>`));
   if (
     diagnosis.profile.git_email &&
     localGitIdentity.email &&
     diagnosis.profile.git_email !== localGitIdentity.email
   ) {
     console.log(
-      `  warning: local Git email does not match profile. Run: sshift bind ${diagnosis.profile.name}`,
+      statusWarning(`warning: local Git email does not match profile. Run: sshift bind ${diagnosis.profile.name}`),
     );
   }
   console.log("");
@@ -59,15 +60,15 @@ export async function doctorCommand(): Promise<void> {
   const identityFiles = parseResolvedIdentityFiles(resolved.stdout);
   console.log(chalk.bold("OpenSSH Resolution"));
   if (identityFiles.length === 0) {
-    console.log("  identityfile: (none reported)");
+    console.log(formatKeyValue("identityfile", "(none reported)"));
   } else {
     for (const identityFile of identityFiles) {
-      console.log(`  identityfile: ${identityFile}`);
+      console.log(formatKeyValue("identityfile", identityFile));
     }
   }
   if (!identityFiles.includes(diagnosis.profile.identity_file)) {
     console.log(
-      `  warning: OpenSSH did not report the profile key. Check unmanaged Host blocks for ${diagnosis.profile.host}.`,
+      statusWarning(`warning: OpenSSH did not report the profile key. Check unmanaged Host blocks for ${diagnosis.profile.host}.`),
     );
   }
   console.log("");
@@ -81,5 +82,5 @@ export async function doctorCommand(): Promise<void> {
   });
 
   console.log(chalk.bold("SSH Auth"));
-  console.log(`  ${authResult.ok ? chalk.green("ok") : chalk.red("failed")}: ${authResult.message}`);
+  console.log(`${authResult.ok ? statusOk("ok") : statusError("failed")}: ${authResult.message}`);
 }

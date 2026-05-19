@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { collectAddSessionProfiles } from "../core/add-flow";
 import { addProfile, loadProfiles } from "../core/profiles";
 import { applyProfilesToSshConfig, renderManagedBlock } from "../core/ssh-config";
+import { formatKeyValue, label, statusOk } from "../utils/output";
 import { buildProfile } from "./profile-builder";
 import { printProfilesTable } from "./profile-list";
 
@@ -58,23 +59,23 @@ export async function addCommand(options: AddOptions): Promise<void> {
   }
 
   const backup = await applyProfilesToSshConfig(store.profiles, "sshift add");
-  console.log(`Added ${addedProfiles.length} profile(s).`);
-  console.log(`Backup: ${backup.file_path}`);
+  console.log(statusOk(`Added ${addedProfiles.length} profile(s).`));
+  console.log(formatKeyValue("Backup", backup.file_path));
 }
 
 async function printAddedProfile(profile: Awaited<ReturnType<typeof buildProfile>>): Promise<void> {
-  console.log(`Added profile: ${profile.name}`);
-  console.log(`Host: ${profile.host}`);
-  console.log(`Key: ${profile.identity_file}`);
-  console.log(`Public key: ${profile.public_key_file}`);
+  console.log(`${label("Added profile:")} ${profile.name}`);
+  console.log(formatKeyValue("Git host", profile.host));
+  console.log(formatKeyValue("Key", profile.identity_file));
+  console.log(formatKeyValue("Public key", profile.public_key_file));
   if (profile.fingerprint) {
-    console.log(`Fingerprint: ${profile.fingerprint}`);
+    console.log(formatKeyValue("Fingerprint", profile.fingerprint));
   }
 
   const publicKey = await readFile(profile.public_key_file, "utf8").catch(() => "");
   if (publicKey.trim()) {
     console.log("");
-    console.log("Add this public key to your Git host:");
+    console.log(label("Add this public key to your Git host:"));
     console.log(publicKey.trim());
   } else {
     console.log("");
