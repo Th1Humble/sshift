@@ -30,7 +30,20 @@ sshift 让正确的做法变简单：
 curl -fsSL https://th1humble.github.io/sshift/install.sh | sh
 ```
 
-安装脚本会解析最新的 [GitHub Release](https://github.com/Th1Humble/sshift/releases)，下载对应的固定版本二进制，校验 checksum 后安装。
+安装脚本会解析最新的 [GitHub Release](https://github.com/Th1Humble/sshift/releases)，下载对应的固定版本二进制，校验 checksum 后默认安装到 `~/.local/bin`。
+
+确保 `~/.local/bin` 已加入 `PATH`：
+
+```bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+如果要安装到其他目录：
+
+```bash
+curl -fsSL https://th1humble.github.io/sshift/install.sh | INSTALL_DIR=/usr/local/bin sh
+```
 
 指定版本安装：
 

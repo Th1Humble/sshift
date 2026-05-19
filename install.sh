@@ -3,7 +3,7 @@ set -eu
 
 REPO="Th1Humble/sshift"
 BIN_NAME="sshift"
-INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
+INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/bin}"
 # Optional: set SSHIFT_VERSION=v0.1.2 to install a specific release.
 
 os="$(uname -s | tr '[:upper:]' '[:lower:]')"
@@ -53,7 +53,9 @@ fi
 asset="${BIN_NAME}-${tag}-${os}-${arch}.tar.gz"
 base_url="https://github.com/${REPO}/releases/download/${tag}"
 
-curl -fsSL "${base_url}/${asset}" -o "${tmp_dir}/${asset}"
+echo "Downloading ${asset}"
+curl -fL --progress-bar "${base_url}/${asset}" -o "${tmp_dir}/${asset}"
+echo "Downloading checksums.txt"
 curl -fsSL "${base_url}/checksums.txt" -o "${tmp_dir}/checksums.txt"
 
 (
@@ -64,6 +66,7 @@ curl -fsSL "${base_url}/checksums.txt" -o "${tmp_dir}/checksums.txt"
     exit 1
   fi
 
+  echo "Verifying checksum"
   if command -v sha256sum >/dev/null 2>&1; then
     printf '%s\n' "$checksum_line" | sha256sum -c -
   else
@@ -76,6 +79,7 @@ curl -fsSL "${base_url}/checksums.txt" -o "${tmp_dir}/checksums.txt"
   fi
 )
 
+echo "Installing to ${INSTALL_DIR}/${BIN_NAME}"
 tar -xzf "${tmp_dir}/${asset}" -C "$tmp_dir"
 chmod +x "${tmp_dir}/${BIN_NAME}"
 

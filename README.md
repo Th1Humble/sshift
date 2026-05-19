@@ -30,7 +30,20 @@ sshift makes the safe path easy:
 curl -fsSL https://th1humble.github.io/sshift/install.sh | sh
 ```
 
-The installer resolves the latest [GitHub Release](https://github.com/Th1Humble/sshift/releases), downloads that fixed-version binary, verifies its checksum, and installs it.
+The installer resolves the latest [GitHub Release](https://github.com/Th1Humble/sshift/releases), downloads that fixed-version binary, verifies its checksum, and installs it to `~/.local/bin` by default.
+
+Make sure `~/.local/bin` is on your `PATH`:
+
+```bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+To install somewhere else:
+
+```bash
+curl -fsSL https://th1humble.github.io/sshift/install.sh | INSTALL_DIR=/usr/local/bin sh
+```
 
 To pin a version:
 
