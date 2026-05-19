@@ -4,7 +4,7 @@ set -eu
 REPO="Th1Humble/sshift"
 BIN_NAME="sshift"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/bin}"
-# Optional: set SSHIFT_VERSION=v0.1.2 to install a specific release.
+# Optional: set SSHIFT_VERSION=v0.1.3 to install a specific release.
 
 os="$(uname -s | tr '[:upper:]' '[:lower:]')"
 arch="$(uname -m)"
