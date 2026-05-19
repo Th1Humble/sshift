@@ -32,6 +32,8 @@ curl -fsSL https://th1humble.github.io/sshift/install.sh | sh
 
 The installer resolves the latest [GitHub Release](https://github.com/Th1Humble/sshift/releases), downloads that fixed-version binary, verifies its checksum, and installs it to `~/.local/bin` by default.
 
+macOS and Linux are supported. Windows is not supported yet.
+
 Make sure `~/.local/bin` is on your `PATH`:
 
 ```bash
@@ -96,6 +98,43 @@ Host github.com
 - `HostName`: the real server OpenSSH connects to
 - `IdentityFile`: the SSH key OpenSSH uses for that host
 - `IdentitiesOnly yes`: prevents OpenSSH from trying unrelated keys
+
+## SSH Access vs Git Author
+
+SSH keys and Git authors solve different problems:
+
+- **SSH key** controls whether you can `clone`, `pull`, or `push`.
+- **Git author** controls the `user.name` and `user.email` written into commits.
+
+Using the right SSH key does **not** automatically change commit author. On a work computer, this is exactly how a personal GitHub repo can accidentally get commits authored with a company email.
+
+sshift handles both sides explicitly:
+
+```bash
+# 1. Route this host to the right SSH key
+sshift add
+sshift scan
+
+# 2. Before committing, inspect the current repo identity
+cd ~/project
+sshift doctor
+
+# 3. Bind only if doctor shows the repo author does not match the profile
+sshift bind github-personal
+
+# 4. Verify what Git will write into new commits
+git config --local user.name
+git config --local user.email
+```
+
+`sshift bind <profile>` writes repo-local config only:
+
+```bash
+git config --local user.name  "Your Name"
+git config --local user.email "you@example.mail"
+```
+
+It does not change your global Git identity and it does not rewrite old commits.
 
 ## Commands
 
@@ -180,7 +219,7 @@ Matched Profile
 
 Git Identity
   local:  (unset) <(unset)>
-  global: Th1Humble <mjsdbd921@gmail.com>
+  global: dev <dev@example.mail>
 
 OpenSSH Resolution
   identityfile: ~/.ssh/id_ed25519_github_com
@@ -343,7 +382,7 @@ Host github.com
   IdentityFile ~/.ssh/id_ed25519_github_com
   IdentitiesOnly yes
 
-# profile: gitlab-com-majian
+# profile: gitlab-com-work
 Host gitlab.com
   HostName gitlab.com
   User git

@@ -32,6 +32,8 @@ curl -fsSL https://th1humble.github.io/sshift/install.sh | sh
 
 安装脚本会解析最新的 [GitHub Release](https://github.com/Th1Humble/sshift/releases)，下载对应的固定版本二进制，校验 checksum 后默认安装到 `~/.local/bin`。
 
+当前支持 macOS 和 Linux，暂不支持 Windows。
+
 确保 `~/.local/bin` 已加入 `PATH`：
 
 ```bash
@@ -96,6 +98,43 @@ Host github.com
 - `HostName`：OpenSSH 真正连接的服务器地址
 - `IdentityFile`：这个 host 使用的 SSH key
 - `IdentitiesOnly yes`：避免 OpenSSH 继续尝试无关的 key
+
+## SSH 访问身份 vs Git 提交身份
+
+SSH key 和 Git author 解决的是两件事：
+
+- **SSH key** 决定你能不能 `clone`、`pull`、`push`
+- **Git author** 决定 commit 里写入的 `user.name` 和 `user.email`
+
+用对 SSH key **不会**自动切换 commit author。工作电脑上最容易出现的问题就是：个人 GitHub 仓库可以正常 push，但 commit author 还是公司邮箱。
+
+sshift 把这两件事分开处理：
+
+```bash
+# 1. 先把 Git host 路由到正确的 SSH key
+sshift add
+sshift scan
+
+# 2. 提交前，先检查当前仓库身份
+cd ~/project
+sshift doctor
+
+# 3. 只有 doctor 显示当前仓库 author 和 profile 不一致时，再绑定
+sshift bind github-personal
+
+# 4. 确认新 commit 会使用哪个作者信息
+git config --local user.name
+git config --local user.email
+```
+
+`sshift bind <profile>` 只写当前仓库的 local config：
+
+```bash
+git config --local user.name  "Your Name"
+git config --local user.email "you@example.mail"
+```
+
+它不会修改全局 Git 身份，也不会重写已经存在的旧 commit。
 
 ## 命令一览
 
@@ -180,7 +219,7 @@ Matched Profile
 
 Git Identity
   local:  (unset) <(unset)>
-  global: Th1Humble <mjsdbd921@gmail.com>
+  global: dev <dev@example.mail>
 
 OpenSSH Resolution
   identityfile: ~/.ssh/id_ed25519_github_com
@@ -343,7 +382,7 @@ Host github.com
   IdentityFile ~/.ssh/id_ed25519_github_com
   IdentitiesOnly yes
 
-# profile: gitlab-com-majian
+# profile: gitlab-com-work
 Host gitlab.com
   HostName gitlab.com
   User git

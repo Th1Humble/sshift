@@ -3,104 +3,952 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>sshift</title>
+    <meta
+      name="description"
+      content="sshift routes Git hosts to the right SSH key using native OpenSSH and Git. No wrappers, no agents."
+    />
+    <title>sshift - Git SSH key routing</title>
     <style>
       :root {
         color-scheme: light;
-        --text: #172033;
-        --muted: #5c667a;
-        --line: #d8dde7;
-        --code: #f4f6fa;
-        --accent: #1769e0;
+        --bg: #fbfcfd;
+        --panel: #ffffff;
+        --text: #152033;
+        --muted: #5d687a;
+        --line: #d9e0ea;
+        --line-strong: #b9c3d1;
+        --code: #101722;
+        --code-soft: #182233;
+        --code-line: #314058;
+        --accent: #0b7a75;
+        --accent-soft: rgba(11, 122, 117, 0.08);
+        --accent-strong: #095f5b;
+        --green: #19b36b;
+        --yellow: #d89b21;
+        --red: #d94a4a;
+        --shadow: 0 18px 48px rgba(21, 32, 51, 0.1);
+        --shadow-sm: 0 4px 12px rgba(21, 32, 51, 0.06);
       }
 
       * {
         box-sizing: border-box;
       }
 
+      html {
+        scroll-behavior: smooth;
+      }
+
       body {
         margin: 0;
-        min-height: 100vh;
-        display: grid;
-        place-items: center;
-        padding: 32px;
         font-family:
+          Inter,
           ui-sans-serif,
           system-ui,
           -apple-system,
           BlinkMacSystemFont,
           "Segoe UI",
+          "PingFang SC",
+          "Hiragino Sans GB",
+          "Microsoft YaHei",
           sans-serif;
         color: var(--text);
-        background: #ffffff;
-      }
-
-      main {
-        width: min(100%, 760px);
-      }
-
-      h1 {
-        margin: 0 0 12px;
-        font-size: 44px;
-        line-height: 1;
-        letter-spacing: 0;
-      }
-
-      p {
-        margin: 0;
-        color: var(--muted);
-        font-size: 18px;
-        line-height: 1.6;
-      }
-
-      pre {
-        margin: 28px 0 20px;
-        padding: 18px 20px;
-        overflow-x: auto;
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: var(--code);
-        color: var(--text);
-        font-size: 15px;
-        line-height: 1.5;
-      }
-
-      code {
-        font-family:
-          ui-monospace,
-          SFMono-Regular,
-          Menlo,
-          Monaco,
-          Consolas,
-          "Liberation Mono",
-          monospace;
-      }
-
-      nav {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 16px;
+        background:
+          linear-gradient(180deg, rgba(11, 122, 117, 0.06), transparent 420px),
+          var(--bg);
       }
 
       a {
+        color: inherit;
+      }
+
+      .shell {
+        width: min(1120px, calc(100% - 40px));
+        margin: 0 auto;
+      }
+
+      /* Header */
+      .site-header {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        width: 100%;
+        border-bottom: 1px solid rgba(217, 224, 234, 0.88);
+        background: rgba(251, 252, 253, 0.92);
+        backdrop-filter: blur(14px);
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 18px 0;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--text);
+        font-weight: 760;
+        text-decoration: none;
+      }
+
+      .mark {
+        display: grid;
+        width: 30px;
+        height: 30px;
+        place-items: center;
+        border: 1px solid var(--line-strong);
+        border-radius: 7px;
+        background: var(--panel);
         color: var(--accent);
-        text-decoration-thickness: 1px;
-        text-underline-offset: 3px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 16px;
+        box-shadow: var(--shadow-sm);
+      }
+
+      .topnav {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .topnav a {
+        text-decoration: none;
+        transition: color 0.15s;
+      }
+
+      .topnav a:hover {
+        color: var(--text);
+      }
+
+      /* Hero */
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(360px, 0.88fr);
+        gap: 42px;
+        align-items: center;
+        padding: 64px 0 72px;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 18px;
+        padding: 6px 14px 6px 10px;
+        border-radius: 20px;
+        background: var(--accent-soft);
+        color: var(--accent-strong);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 999px;
+        background: var(--green);
+        box-shadow: 0 0 0 4px rgba(25, 179, 107, 0.15);
+      }
+
+      h1 {
+        margin: 0;
+        max-width: 680px;
+        color: var(--text);
+        font-size: clamp(36px, 5.5vw, 64px);
+        line-height: 1.05;
+        letter-spacing: -0.02em;
+      }
+
+      .lead {
+        margin: 22px 0 0;
+        max-width: 560px;
+        color: var(--muted);
+        font-size: clamp(16px, 1.8vw, 18px);
+        line-height: 1.7;
+      }
+
+      .lead strong {
+        color: var(--text);
+        font-weight: 600;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 28px;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 42px;
+        padding: 0 18px;
+        border: 1px solid var(--line-strong);
+        border-radius: 7px;
+        color: var(--text);
+        background: var(--panel);
+        font-size: 14px;
+        font-weight: 650;
+        text-decoration: none;
+        transition: transform 0.12s, box-shadow 0.12s;
+      }
+
+      .button.primary {
+        border-color: var(--accent);
+        color: #ffffff;
+        background: var(--accent);
+      }
+
+      .button:hover {
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-sm);
+      }
+
+      .button.primary:hover {
+        background: var(--accent-strong);
+      }
+
+      /* Install bar */
+      .install {
+        margin-top: 28px;
+      }
+
+      .install-label {
+        margin: 0 0 8px;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 650;
+      }
+
+      .codebar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        max-width: 620px;
+        padding: 8px;
+        border: 1px solid #26344a;
+        border-radius: 8px;
+        background: var(--code);
+        box-shadow: var(--shadow);
+      }
+
+      .command-text {
+        display: flex;
+        min-width: 0;
+        flex: 1;
+        align-items: center;
+        gap: 12px;
+        padding: 6px 8px;
+        overflow-x: auto;
+      }
+
+      .prompt {
+        color: var(--green);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-weight: 800;
+      }
+
+      .copy-button {
+        flex: 0 0 auto;
+        min-height: 36px;
+        padding: 0 14px;
+        border: 1px solid #40506a;
+        border-radius: 7px;
+        color: #e9f0fb;
+        background: #1d293a;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background 0.12s, border-color 0.12s;
+      }
+
+      .copy-button:hover,
+      .copy-button:focus-visible {
+        border-color: #6a7b95;
+        background: #26344a;
+      }
+
+      .copy-button.copied {
+        border-color: rgba(25, 179, 107, 0.7);
+        color: #c9f7df;
+      }
+
+      code,
+      pre,
+      .terminal {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      }
+
+      .codebar code {
+        white-space: nowrap;
+        color: #e9f0fb;
+        font-size: 14px;
+      }
+
+      .hint {
+        margin-top: 10px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.6;
+      }
+
+      /* Terminal */
+      .terminal {
+        overflow: hidden;
+        border: 1px solid #27364d;
+        border-radius: 10px;
+        background: var(--code);
+        box-shadow: var(--shadow);
+      }
+
+      .terminal-head {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--code-line);
+        background: var(--code-soft);
+      }
+
+      .traffic {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: #6d7890;
+      }
+
+      .traffic.r { background: var(--red); }
+      .traffic.y { background: var(--yellow); }
+      .traffic.g { background: var(--green); }
+
+      .terminal-body {
+        min-height: 330px;
+        padding: 20px;
+        color: #d7e0ef;
+        font-size: 13px;
+        line-height: 1.8;
+      }
+
+      .terminal-line {
+        opacity: 0;
+        transform: translateY(5px);
+        animation: rise 380ms ease forwards;
+      }
+
+      .terminal-line:nth-child(1) { animation-delay: 100ms; }
+      .terminal-line:nth-child(2) { animation-delay: 250ms; }
+      .terminal-line:nth-child(3) { animation-delay: 400ms; }
+      .terminal-line:nth-child(4) { animation-delay: 550ms; }
+      .terminal-line:nth-child(5) { animation-delay: 700ms; }
+      .terminal-line:nth-child(6) { animation-delay: 850ms; }
+      .terminal-line:nth-child(7) { animation-delay: 1000ms; }
+      .terminal-line:nth-child(8) { animation-delay: 1150ms; }
+      .terminal-line:nth-child(9) { animation-delay: 1300ms; }
+      .terminal-line:nth-child(10) { animation-delay: 1450ms; }
+      .terminal-line:nth-child(11) { animation-delay: 1600ms; }
+      .terminal-line:nth-child(12) { animation-delay: 1750ms; }
+      .terminal-line:nth-child(13) { animation-delay: 1900ms; }
+
+      .cmd { color: #ffffff; }
+      .muted { color: #8ea0ba; }
+      .ok { color: #58d68d; }
+      .warn { color: #f2c16b; }
+      .err { color: #f87171; }
+      .key { color: #7dd3fc; }
+      .dim { color: #64748b; }
+
+      .cursor::after {
+        content: "";
+        display: inline-block;
+        width: 8px;
+        height: 1.2em;
+        margin-left: 3px;
+        vertical-align: -0.2em;
+        background: #d7e0ef;
+        animation: blink 1s steps(2, start) infinite;
+      }
+
+      /* Sections */
+      section {
+        scroll-margin-top: 92px;
+        padding: 52px 0;
+        border-top: 1px solid var(--line);
+      }
+
+      .section-title {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 28px;
+      }
+
+      h2 {
+        margin: 0;
+        font-size: clamp(26px, 3.5vw, 38px);
+        line-height: 1.15;
+        letter-spacing: -0.01em;
+      }
+
+      .section-title p {
+        max-width: 480px;
+        margin: 0;
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1.7;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .split {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 16px;
+        align-items: stretch;
+      }
+
+      .card,
+      .step,
+      .scenario {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--panel);
+        transition: box-shadow 0.15s, transform 0.15s;
+      }
+
+      .card:hover,
+      .step:hover,
+      .scenario:hover {
+        box-shadow: var(--shadow-sm);
+        transform: translateY(-2px);
+      }
+
+      .card {
+        padding: 24px;
+      }
+
+      .pain-card {
+        border-color: #c8d4e3;
+      }
+
+      .pain-card.bad {
+        border-left: 3px solid var(--red);
+      }
+
+      .pain-card.good {
+        border-left: 3px solid var(--green);
+      }
+
+      .card h3,
+      .step h3,
+      .scenario h3 {
+        margin: 0 0 10px;
+        font-size: 16px;
+        line-height: 1.3;
+      }
+
+      .card p,
+      .step p,
+      .scenario p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.65;
+        font-size: 14px;
+      }
+
+      .zh {
+        display: block;
+        margin-top: 6px;
+        color: #4a5568;
+        font-size: 13px;
+      }
+
+      .steps {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .step {
+        position: relative;
+        padding: 22px;
+      }
+
+      .number {
+        display: inline-grid;
+        width: 28px;
+        height: 28px;
+        place-items: center;
+        margin-bottom: 14px;
+        border-radius: 999px;
+        color: #ffffff;
+        background: var(--accent);
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .scenario-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .scenario {
+        padding: 24px;
+      }
+
+      .mini-code {
+        margin: 14px 0 0;
+        padding: 14px 16px;
+        overflow-x: auto;
+        border: 1px solid #26344a;
+        border-radius: 8px;
+        background: var(--code);
+        color: #d7e0ef;
+        font-size: 13px;
+        line-height: 1.7;
+      }
+
+      .mini-code .prompt,
+      .mini-code .success,
+      .mini-code .warning,
+      .mini-code .comment,
+      .mini-code .host,
+      .mini-code .cmd-name {
+        font-weight: 700;
+      }
+
+      .mini-code .success {
+        color: #58d68d;
+      }
+
+      .mini-code .warning {
+        color: #f2c16b;
+      }
+
+      .mini-code .comment {
+        color: #8ea0ba;
+        font-weight: 500;
+      }
+
+      .mini-code .host {
+        color: #7dd3fc;
+      }
+
+      .mini-code .cmd-name {
+        color: #ffffff;
+      }
+
+      .not-list {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .not-list li {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        padding: 12px 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .not-list .icon {
+        flex-shrink: 0;
+        font-size: 15px;
+      }
+
+      .safety-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .safety-grid li {
+        padding: 14px 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .safety-grid .zh {
+        font-weight: 500;
+      }
+
+      footer {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 32px 0 48px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      footer a {
+        color: var(--text);
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      footer a:hover {
+        color: var(--accent);
+      }
+
+      @keyframes rise {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes blink {
+        50% { opacity: 0; }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html { scroll-behavior: auto; }
+        .terminal-line, .cursor::after, .button:hover, .card:hover, .step:hover, .scenario:hover {
+          animation: none;
+          transform: none;
+        }
+        .terminal-line { opacity: 1; }
+      }
+
+      @media (max-width: 900px) {
+        .hero, .grid, .split, .steps, .scenario-grid, .not-list, .safety-grid {
+          grid-template-columns: 1fr;
+        }
+        .hero { padding: 46px 0 58px; }
+        .section-title { align-items: start; flex-direction: column; }
+      }
+
+      @media (max-width: 620px) {
+        .shell { width: min(100% - 24px, 1120px); }
+        header { align-items: flex-start; flex-direction: column; }
+        .topnav { width: 100%; flex-wrap: wrap; gap: 10px 16px; }
+        .terminal-body { min-height: 280px; padding: 14px; font-size: 12px; }
+        .codebar { align-items: stretch; flex-direction: column; }
+        .copy-button { width: 100%; }
       }
     </style>
   </head>
   <body>
-    <main>
-      <h1>sshift</h1>
-      <p>Use the right SSH key for every Git repo.</p>
+    <div class="site-header">
+      <header class="shell">
+        <a class="brand" href="#top" aria-label="sshift home">
+          <span class="mark">s</span>
+          <span>sshift</span>
+        </a>
+        <nav class="topnav" aria-label="Project links">
+          <a href="#problem">Problem</a>
+          <a href="#how">How it works</a>
+          <a href="#scenarios">Scenarios</a>
+          <a href="#safety">Safety</a>
+          <a href="https://github.com/Th1Humble/sshift">GitHub</a>
+        </nav>
+      </header>
+    </div>
 
-      <pre><code>curl -fsSL https://th1humble.github.io/sshift/install.sh | sh</code></pre>
+    <div class="shell">
+      <main id="top">
+        <section class="hero" aria-labelledby="hero-title">
+          <div>
+            <p class="eyebrow"><span class="dot"></span> Zero runtime. Pure config.</p>
+            <h1 id="hero-title">Stop getting <code style="color:var(--red)">Permission denied</code> on the wrong account.</h1>
+            <p class="lead">
+              sshift writes your <code>~/.ssh/config</code> so each Git host uses the right key.
+              Then it gets out of the way — <strong>native git, native SSH, no wrapper</strong>.
+              <span class="zh">sshift 帮你写好 <code>~/.ssh/config</code>，让不同 Git host 走正确的 key。之后还是原生 git 和 SSH，不包命令、不常驻。</span>
+            </p>
 
-      <nav aria-label="Project links">
-        <a href="https://github.com/Th1Humble/sshift">GitHub</a>
-        <a href="https://github.com/Th1Humble/sshift/releases">Releases</a>
-        <a href="./install.sh">install.sh</a>
-      </nav>
-    </main>
+            <div class="actions">
+              <a class="button primary" href="https://github.com/Th1Humble/sshift#readme">Docs</a>
+              <a class="button" href="https://github.com/Th1Humble/sshift/blob/main/README.zh-CN.md">中文文档</a>
+            </div>
+
+            <div class="install" id="install">
+              <p class="install-label">Install</p>
+              <div class="codebar" role="group" aria-label="Install command">
+                <div class="command-text">
+                  <span class="prompt">$</span>
+                  <code id="install-command">curl -fsSL https://th1humble.github.io/sshift/install.sh | sh</code>
+                </div>
+                <button class="copy-button" type="button" data-copy-target="install-command">Copy</button>
+              </div>
+              <p class="hint">
+                Installs to <code>~/.local/bin</code>. No sudo needed.
+                <span class="zh">默认安装到 <code>~/.local/bin</code>，通常不需要 sudo。</span>
+                <span class="zh">macOS and Linux only for now. 暂不支持 Windows。</span>
+              </p>
+            </div>
+          </div>
+
+          <div class="terminal" aria-label="sshift doctor demo">
+            <div class="terminal-head">
+              <span class="traffic r"></span>
+              <span class="traffic y"></span>
+              <span class="traffic g"></span>
+            </div>
+            <div class="terminal-body">
+              <div class="terminal-line"><span class="prompt">$</span> <span class="cmd">sshift doctor</span></div>
+              <div class="terminal-line">&nbsp;</div>
+              <div class="terminal-line muted">Repository</div>
+              <div class="terminal-line">  origin: git@github.com:th1humble/sshift.git</div>
+              <div class="terminal-line">  host:   <span class="key">github.com</span></div>
+              <div class="terminal-line">&nbsp;</div>
+              <div class="terminal-line muted">Matched Profile</div>
+              <div class="terminal-line">  name: github-com-th1humble</div>
+              <div class="terminal-line">  key:  ~/.ssh/id_ed25519_github_com</div>
+              <div class="terminal-line">&nbsp;</div>
+              <div class="terminal-line muted">SSH Auth</div>
+              <div class="terminal-line">  <span class="ok">ok</span>: Authenticated as Th1Humble</div>
+              <div class="terminal-line cursor">&nbsp;</div>
+            </div>
+          </div>
+        </section>
+
+        <section id="problem" aria-labelledby="problem-title">
+          <div class="section-title">
+            <h2 id="problem-title">The actual pain</h2>
+            <p>
+              You already have a working company setup. Adding a personal GitHub key shouldn't break it.
+              <span class="zh">公司 Git 已经能用时，再加个人 GitHub，不应该把现有配置搞乱。</span>
+            </p>
+          </div>
+
+          <div class="split">
+            <article class="card pain-card bad">
+              <h3>Without sshift</h3>
+              <p>
+                You clone a personal repo on your work laptop. <code>Permission denied (publickey)</code>.
+                You Google the SSH config format, paste something in, try again. It works — but then you push a commit
+                and realize the author says <code>work@example.com</code>. Already on GitHub. Can't undo.
+              </p>
+              <span class="zh">在公司电脑 clone 个人仓库，Permission denied。查了半天 SSH config 格式，终于通了——结果 push 上去才发现 commit 邮箱是公司的，已经推上去了。</span>
+              <pre class="mini-code"><code><span class="prompt">$</span> <span class="cmd-name">git push</span>
+<span class="warning">Permission denied (publickey).</span>
+
+<span class="comment"># 30 minutes later...</span>
+<span class="prompt">$</span> <span class="cmd-name">git log</span> --oneline -1
+a1b2c3d feat: add feature (<span class="warning">work@example.com</span>)</code></pre>
+            </article>
+            <article class="card pain-card good">
+              <h3>With sshift</h3>
+              <p>
+                Add a profile, sshift writes the config. Clone works immediately.
+                Run <code>sshift doctor</code> in any repo to confirm which key and identity it uses.
+              </p>
+              <span class="zh">加一个 profile，config 自动写好。clone 直接通。doctor 随时确认当前 repo 用的是哪个 key。</span>
+              <pre class="mini-code"><code><span class="prompt">$</span> <span class="cmd-name">sshift add</span>        <span class="comment"># 3 questions, done</span>
+<span class="prompt">$</span> <span class="cmd-name">git clone</span> git@<span class="host">github.com</span>:me/repo.git
+<span class="prompt">$</span> <span class="cmd-name">sshift doctor</span>     <span class="comment"># confirms: right key, right author</span></code></pre>
+            </article>
+          </div>
+        </section>
+
+        <section id="how" aria-labelledby="how-title">
+          <div class="section-title">
+            <h2 id="how-title">How it works</h2>
+            <p>
+              Configure once, then forget sshift exists. It doesn't run during git operations.
+              <span class="zh">配置一次，之后继续正常用 git。git 操作时不需要 sshift 参与。</span>
+            </p>
+          </div>
+
+          <div class="steps">
+            <article class="step">
+              <span class="number">1</span>
+              <h3>Add identities</h3>
+              <p>Pick a host (GitHub, GitLab, or custom), name your account, generate or select a key.</p>
+              <span class="zh">选平台、填账号、生成或选择 key。</span>
+            </article>
+            <article class="step">
+              <span class="number">2</span>
+              <h3>Config is written</h3>
+              <p>sshift writes a managed block in <code>~/.ssh/config</code>. A backup is created first. Your existing config stays untouched.</p>
+              <span class="zh">写入受管理块，已有配置不动，写入前备份。</span>
+            </article>
+            <article class="step">
+              <span class="number">3</span>
+              <h3>Use git normally</h3>
+              <p><code>git clone</code>, <code>push</code>, <code>pull</code> — OpenSSH reads the config and picks the right key. sshift is not involved.</p>
+              <span class="zh">正常用 git。OpenSSH 读 config 选 key，sshift 不参与。</span>
+            </article>
+          </div>
+
+          <div style="margin-top: 20px;">
+            <h3 style="font-size:15px; margin:0 0 12px; color:var(--muted);">What sshift does NOT do</h3>
+            <ul class="not-list">
+              <li><span class="icon">&#x2717;</span> Wrap or intercept git commands<span class="zh">不包装、不拦截 git 命令</span></li>
+              <li><span class="icon">&#x2717;</span> Run as a background daemon<span class="zh">不作为后台进程常驻</span></li>
+              <li><span class="icon">&#x2717;</span> Read or store private key content<span class="zh">不读取、不存储私钥内容</span></li>
+              <li><span class="icon">&#x2717;</span> Manage ssh-agent<span class="zh">不接管 ssh-agent</span></li>
+            </ul>
+          </div>
+        </section>
+
+        <section id="scenarios" aria-labelledby="scenarios-title">
+          <div class="section-title">
+            <h2 id="scenarios-title">Common scenarios</h2>
+            <p>
+              Works for both a fresh machine and an already-configured work laptop.
+              <span class="zh">新电脑能从零配置；已有工作电脑也能增量接入。</span>
+            </p>
+          </div>
+
+          <div class="scenario-grid">
+            <article class="scenario">
+              <h3>New computer</h3>
+              <p>Start from zero. Add all your identities in one session.</p>
+              <span class="zh">新电脑从零开始，一次加完所有身份。</span>
+              <pre class="mini-code"><code><span class="prompt">$</span> <span class="cmd-name">sshift add</span>
+? Host template → <span class="host">GitHub</span>
+? Account       → th1humble
+? Generate key? → Yes
+<span class="success">✓ Public key printed — add to GitHub</span>
+
+? Add another?  → Yes
+? Host template → <span class="host">GitLab</span>
+...
+
+<span class="success">✓ SSH config applied.</span></code></pre>
+            </article>
+
+            <article class="scenario">
+              <h3>Existing work laptop</h3>
+              <p>Company config already works. Add GitHub without touching it.</p>
+              <span class="zh">公司配置已经好了，增量加 GitHub 不影响现有的。</span>
+              <pre class="mini-code"><code><span class="prompt">$</span> <span class="cmd-name">sshift scan</span>
+SSH Keys (2 found)
+  ~/.ssh/id_ed25519       (company)
+  ~/.ssh/id_rsa           (legacy)
+SSH Config: 1 host (unmanaged)
+
+<span class="prompt">$</span> <span class="cmd-name">sshift add</span>
+<span class="comment"># adds GitHub profile only</span>
+<span class="comment"># company config untouched</span>
+
+<span class="prompt">$</span> <span class="cmd-name">sshift doctor</span>
+  <span class="success">ok</span>: Authenticated as Th1Humble</code></pre>
+            </article>
+
+            <article class="scenario">
+              <h3>Check author before committing</h3>
+              <p>Run doctor first. Bind only if the current repo author does not match the profile.</p>
+              <span class="zh">提交前先跑 doctor 看当前仓库身份；不一致时，再决定是否 bind。</span>
+              <pre class="mini-code"><code><span class="prompt">$</span> <span class="cmd-name">sshift doctor</span>
+  Git Identity
+  local: (unset)
+  global: dev &lt;<span class="warning">work@example.com</span>&gt;
+  profile: Th1Humble &lt;<span class="success">personal@example.com</span>&gt;
+  <span class="warning">⚠ mismatch with profile</span>
+  Run: <span class="cmd-name">sshift bind github-com-th1humble</span>
+
+<span class="prompt">$</span> <span class="cmd-name">sshift bind github-com-th1humble</span>
+<span class="success">✓ New commits in this repo use:</span>
+  user.name  = Th1Humble
+  user.email = <span class="success">personal@example.com</span></code></pre>
+            </article>
+
+            <article class="scenario">
+              <h3>Something broke</h3>
+              <p>Roll back to the previous SSH config in one command.</p>
+              <span class="zh">出问题了？一条命令回滚。</span>
+              <pre class="mini-code"><code><span class="prompt">$</span> <span class="cmd-name">sshift rollback</span>
+<span class="success">Restored ~/.ssh/config from backup</span>
+  2026-05-18T14:30:22
+
+<span class="prompt">$</span> <span class="cmd-name">ssh -T</span> git@<span class="host">github.com</span>
+<span class="success">Hi Th1Humble! You've successfully
+authenticated.</span></code></pre>
+            </article>
+          </div>
+        </section>
+
+        <section id="safety" aria-labelledby="safety-title">
+          <div class="section-title">
+            <h2 id="safety-title">Safety guarantees</h2>
+            <p>
+              SSH keys are sensitive. sshift keeps private key handling entirely in native OpenSSH.
+              <span class="zh">SSH key 很敏感。sshift 只维护配置，私钥处理仍然交给原生 OpenSSH。</span>
+            </p>
+          </div>
+
+          <ul class="safety-grid">
+            <li>Never uploads keys<span class="zh">永不上传 key</span></li>
+            <li>Never reads private key content<span class="zh">永不读取私钥内容</span></li>
+            <li>Only records file paths<span class="zh">只记录路径</span></li>
+            <li>Fingerprints from public keys only<span class="zh">指纹仅来自公钥</span></li>
+            <li>Backup before every write<span class="zh">每次写入前备份</span></li>
+            <li>Reversible via <code>sshift rollback</code><span class="zh">随时可回滚</span></li>
+            <li>Only edits its own managed block<span class="zh">只改自己的受管理块</span></li>
+            <li>Native OpenSSH + Git only<span class="zh">只用原生 SSH 和 Git</span></li>
+          </ul>
+        </section>
+      </main>
+
+      <footer>
+        <span>MIT. For developers who juggle multiple Git identities.</span>
+        <span>
+          <a href="https://github.com/Th1Humble/sshift">GitHub</a>
+          ·
+          <a href="https://github.com/Th1Humble/sshift/releases">Releases</a>
+        </span>
+      </footer>
+    </div>
+    <script>
+      const copyButton = document.querySelector("[data-copy-target]");
+
+      copyButton?.addEventListener("click", async () => {
+        const targetId = copyButton.getAttribute("data-copy-target");
+        const target = targetId ? document.getElementById(targetId) : null;
+        const command = target?.textContent?.trim();
+        if (!command) return;
+
+        try {
+          await navigator.clipboard.writeText(command);
+        } catch {
+          const range = document.createRange();
+          range.selectNodeContents(target);
+          const sel = window.getSelection();
+          sel?.removeAllRanges();
+          sel?.addRange(range);
+          document.execCommand("copy");
+        }
+
+        copyButton.textContent = "Copied";
+        copyButton.classList.add("copied");
+        setTimeout(() => {
+          copyButton.textContent = "Copy";
+          copyButton.classList.remove("copied");
+        }, 1800);
+      });
+    </script>
   </body>
 </html>
