@@ -1,5 +1,5 @@
-import { readdir } from "node:fs/promises";
-import { join } from "node:path";
+import { mkdir, readdir, stat } from "node:fs/promises";
+import { dirname, join } from "node:path";
 import type { PublicKeyInfo } from "../types";
 import { sshDir, type PathContext } from "../utils/paths";
 import { runCommand, type CommandRunner } from "../utils/shell";
@@ -59,6 +59,16 @@ export async function discoverPublicKeys(
 
 export async function generateKey(options: GenerateKeyOptions): Promise<void> {
   const runner = options.runner ?? runCommand;
+  if (!options.runner) {
+    for (const path of [options.identityFile, `${options.identityFile}.pub`]) {
+      const exists = await stat(path).then(() => true).catch((error: unknown) => {
+        if (error instanceof Error && "code" in error && error.code === "ENOENT") return false;
+        throw error;
+      });
+      if (exists) throw new Error(`Key file already exists: ${path}. Choose the existing key or a different path.`);
+    }
+    await mkdir(dirname(options.identityFile), { recursive: true, mode: 0o700 });
+  }
   const result = await runner("ssh-keygen", [
     "-t",
     "ed25519",

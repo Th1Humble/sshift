@@ -2,10 +2,12 @@ import { describe, expect, test } from "bun:test";
 import { buildProfile } from "../src/commands/profile-builder";
 
 describe("profile builder", () => {
-  test("builds a profile without git_name or git_email", async () => {
+  test("builds a complete SSH and Git author identity", async () => {
     const profile = await buildProfile({
       template: "github",
       account: "th1humble",
+      gitName: "Personal Name",
+      gitEmail: "personal@example.com",
       identityFile: "/tmp/.ssh/id_ed25519_github",
       publicKeyFile: "/tmp/.ssh/id_ed25519_github.pub",
       fingerprint: "SHA256:test123",
@@ -19,8 +21,8 @@ describe("profile builder", () => {
     expect(profile.identity_file).toBe("/tmp/.ssh/id_ed25519_github");
     expect(profile.public_key_file).toBe("/tmp/.ssh/id_ed25519_github.pub");
     expect(profile.fingerprint).toBe("SHA256:test123");
-    expect(profile).not.toHaveProperty("git_name");
-    expect(profile).not.toHaveProperty("git_email");
+    expect(profile.git_name).toBe("Personal Name");
+    expect(profile.git_email).toBe("personal@example.com");
   });
 
   test("uses account@host as key comment when generating a key", async () => {
@@ -31,6 +33,8 @@ describe("profile builder", () => {
     const profile = await buildProfile({
       template: "gitlab",
       account: "majian",
+      gitName: "Work Name",
+      gitEmail: "work@example.com",
       identityFile: "/tmp/.ssh/id_ed25519_gitlab",
       fingerprint: "SHA256:abc",
     });
@@ -44,9 +48,12 @@ describe("profile builder", () => {
   test("uses custom hostname when no template matches", async () => {
     const profile = await buildProfile({
       template: "__nonexistent__",
+      user: "git",
       host: "git.company.internal",
       hostname: "git.company.internal",
       account: "dev",
+      gitName: "Developer",
+      gitEmail: "dev@example.com",
       identityFile: "/tmp/.ssh/id_custom",
       fingerprint: "SHA256:custom",
     });

@@ -18,7 +18,7 @@ export interface RepoDiagnosis {
 }
 
 export function parseGitSshHost(remoteUrl: string): string | undefined {
-  const scpLike = remoteUrl.match(/^[^@]+@([^:]+):/);
+  const scpLike = remoteUrl.match(/^(?:[^/@:]+@)?([^/:]+):(?!\/\/)/);
   if (scpLike?.[1]) {
     return scpLike[1];
   }
@@ -46,9 +46,13 @@ export function parseSshAuthResult(input: SshAuthParseInput): SshAuthResult {
     };
   }
 
-  if (input.host === "github.com" && output.includes("successfully authenticated")) {
+  if (output.includes("successfully authenticated")) {
     const match = output.match(/Hi ([^!]+)!/);
     return { ok: true, message: `Authenticated as ${match?.[1] ?? "GitHub user"}` };
+  }
+
+  if (/Welcome to GitLab,/i.test(output)) {
+    return { ok: true, message: output.trim() };
   }
 
   if (input.exitCode === 0) {
@@ -71,7 +75,13 @@ export function diagnoseRepoFromRemote(
   remoteUrl: string,
   profiles: Profile[],
 ): RepoDiagnosis {
-  const remoteHost = parseGitSshHost(remoteUrl);
+  let remoteHost = parseGitSshHost(remoteUrl);
+  if (!remoteHost) {
+    try {
+      const url = new URL(remoteUrl);
+      if (url.protocol === "https:" || url.protocol === "http:") remoteHost = url.hostname;
+    } catch { /* A non-URL remote has no host to match. */ }
+  }
   const diagnosis: RepoDiagnosis = {};
 
   if (remoteHost) {

@@ -3,7 +3,8 @@ import type { ScanResult, SshHostEntry } from "../types";
 import { loadProfiles } from "./profiles";
 import { discoverPublicKeys } from "./ssh-keygen";
 import { readGlobalGitIdentity } from "./git-config";
-import { MANAGED_END, MANAGED_START } from "./ssh-config";
+import { parseSshConfigHosts } from "./ssh-config";
+export { parseSshConfigHosts } from "./ssh-config";
 import { sshConfigPath, type PathContext } from "../utils/paths";
 import { runCommand, type CommandRunner } from "../utils/shell";
 
@@ -55,50 +56,4 @@ async function which(command: string, runner: CommandRunner): Promise<string | u
 async function readSshHosts(ctx?: PathContext): Promise<SshHostEntry[]> {
   const config = await readFile(sshConfigPath(ctx), "utf8").catch(() => "");
   return parseSshConfigHosts(config);
-}
-
-export function parseSshConfigHosts(config: string): SshHostEntry[] {
-  const hosts: SshHostEntry[] = [];
-  let current: SshHostEntry | undefined;
-  let managed = false;
-
-  for (const rawLine of config.split(/\r?\n/)) {
-    const line = rawLine.trim();
-
-    if (line === MANAGED_START) {
-      managed = true;
-      continue;
-    }
-    if (line === MANAGED_END) {
-      managed = false;
-      continue;
-    }
-    if (line.length === 0 || line.startsWith("#")) {
-      continue;
-    }
-
-    const [keyword, ...rest] = line.split(/\s+/);
-    const value = rest.join(" ");
-    const normalized = keyword?.toLowerCase();
-
-    if (normalized === "host") {
-      current = { host: value, managed };
-      hosts.push(current);
-      continue;
-    }
-
-    if (!current) {
-      continue;
-    }
-
-    if (normalized === "hostname") {
-      current.hostname = value;
-    } else if (normalized === "user") {
-      current.user = value;
-    } else if (normalized === "identityfile") {
-      current.identity_file = value;
-    }
-  }
-
-  return hosts;
 }

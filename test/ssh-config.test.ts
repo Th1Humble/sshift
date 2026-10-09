@@ -123,4 +123,8 @@ describe("ssh config managed block", () => {
 
     expect(detectUnmanagedHostConflicts(existing, [profile()])).toEqual(["github.com"]);
   });
+
+  test("detects a conflicting host in a multi-host unmanaged block", () => {
+    expect(detectUnmanagedHostConflicts("Host GITHUB.COM gitlab.com\n  User git\n", [profile()])).toEqual(["github.com"]);
+  });
 });

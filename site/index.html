@@ -761,11 +761,11 @@ a1b2c3d feat: add feature (<span class="warning">work@example.com</span>)</code>
             <article class="card pain-card good">
               <h3>With sshift</h3>
               <p>
-                Add a profile, sshift writes the config. Clone works immediately.
+                Add an identity, register its public key, and sshift configures SSH and Git author routing.
                 Run <code>sshift doctor</code> in any repo to confirm which key and identity it uses.
               </p>
-              <span class="zh">加一个 profile，config 自动写好。clone 直接通。doctor 随时确认当前 repo 用的是哪个 key。</span>
-              <pre class="mini-code"><code><span class="prompt">$</span> <span class="cmd-name">sshift add</span>        <span class="comment"># 3 questions, done</span>
+              <span class="zh">添加身份并登记公钥，SSH key 和提交姓名、邮箱自动匹配。doctor 随时确认实际使用的身份。</span>
+              <pre class="mini-code"><code><span class="prompt">$</span> <span class="cmd-name">sshift add</span>        <span class="comment"># one wizard, SSH + author ready</span>
 <span class="prompt">$</span> <span class="cmd-name">git clone</span> git@<span class="host">github.com</span>:me/repo.git
 <span class="prompt">$</span> <span class="cmd-name">sshift doctor</span>     <span class="comment"># confirms: right key, right author</span></code></pre>
             </article>
@@ -825,68 +825,60 @@ a1b2c3d feat: add feature (<span class="warning">work@example.com</span>)</code>
           <div class="scenario-grid">
             <article class="scenario">
               <h3>New computer</h3>
-              <p>Start from zero. Add all your identities in one session.</p>
-              <span class="zh">新电脑从零开始，一次加完所有身份。</span>
+              <p>Start from zero. Add a platform identity with one wizard.</p>
+              <span class="zh">新电脑从零开始，一个向导配置一个平台身份。</span>
               <pre class="mini-code"><code><span class="prompt">$</span> <span class="cmd-name">sshift add</span>
 ? Host template → <span class="host">GitHub</span>
 ? Account       → th1humble
-? Generate key? → Yes
+? Commit name   → Th1Humble
+? Commit email  → personal@example.com
+? SSH key       → Generate new
 <span class="success">✓ Public key printed — add to GitHub</span>
 
-? Add another?  → Yes
-? Host template → <span class="host">GitLab</span>
-...
+<span class="success">✓ SSH and Git author routing activated.</span>
 
-<span class="success">✓ SSH config applied.</span></code></pre>
+<span class="prompt">$</span> <span class="cmd-name">sshift add</span>
+<span class="comment"># add GitLab whenever you need it</span></code></pre>
             </article>
 
             <article class="scenario">
               <h3>Existing work laptop</h3>
               <p>Company config already works. Add GitHub without touching it.</p>
               <span class="zh">公司配置已经好了，增量加 GitHub 不影响现有的。</span>
-              <pre class="mini-code"><code><span class="prompt">$</span> <span class="cmd-name">sshift scan</span>
-SSH Keys (2 found)
-  ~/.ssh/id_ed25519       (company)
-  ~/.ssh/id_rsa           (legacy)
-SSH Config: 1 host (unmanaged)
+              <pre class="mini-code"><code><span class="prompt">$</span> <span class="cmd-name">sshift add</span>
+<span class="comment"># select GitHub, commit name/email and key</span>
+<span class="comment"># existing company config is preserved</span>
+<span class="success">✓ SSH and Git author routing activated.</span>
 
-<span class="prompt">$</span> <span class="cmd-name">sshift add</span>
-<span class="comment"># adds GitHub profile only</span>
-<span class="comment"># company config untouched</span>
-
-<span class="prompt">$</span> <span class="cmd-name">sshift doctor</span>
-  <span class="success">ok</span>: Authenticated as Th1Humble</code></pre>
+<span class="prompt">$</span> <span class="cmd-name">sshift list</span>
+  github-com-personal  personal@example.com
+  gitlab-com-work      work@example.com</code></pre>
             </article>
 
             <article class="scenario">
               <h3>Check author before committing</h3>
-              <p>Run doctor first. Bind only if the current repo author does not match the profile.</p>
-              <span class="zh">提交前先跑 doctor 看当前仓库身份；不一致时，再决定是否 bind。</span>
+              <p>Git selects the author automatically. Doctor checks the actual identity and helps migrate old repository settings.</p>
+              <span class="zh">Git 自动匹配提交身份。doctor 检查实际作者，并协助迁移旧仓库的覆盖设置。</span>
               <pre class="mini-code"><code><span class="prompt">$</span> <span class="cmd-name">sshift doctor</span>
-  Git Identity
-  local: (unset)
-  global: dev &lt;<span class="warning">work@example.com</span>&gt;
-  profile: Th1Humble &lt;<span class="success">personal@example.com</span>&gt;
-  <span class="warning">⚠ mismatch with profile</span>
-  Run: <span class="cmd-name">sshift bind github-com-th1humble</span>
+  Actual Commit Identity
+  Author: Th1Humble &lt;personal@example.com&gt;
+  Committer: Th1Humble &lt;personal@example.com&gt;
+<span class="success">✓ New commits use the expected name and email.</span>
 
-<span class="prompt">$</span> <span class="cmd-name">sshift bind github-com-th1humble</span>
-<span class="success">✓ New commits in this repo use:</span>
-  user.name  = Th1Humble
-  user.email = <span class="success">personal@example.com</span></code></pre>
+<span class="comment"># migrate an old repo with local overrides</span>
+<span class="prompt">$</span> <span class="cmd-name">sshift doctor --fix</span></code></pre>
             </article>
 
             <article class="scenario">
-              <h3>Something broke</h3>
-              <p>Roll back to the previous SSH config in one command.</p>
-              <span class="zh">出问题了？一条命令回滚。</span>
-              <pre class="mini-code"><code><span class="prompt">$</span> <span class="cmd-name">sshift rollback</span>
-<span class="success">Restored ~/.ssh/config from backup</span>
-  2026-05-18T14:30:22
+              <h3>Change an identity</h3>
+              <p>Change your email or key in the same wizard. Failed configuration writes recover automatically.</p>
+              <span class="zh">换邮箱或 key？在同一个向导里修改。配置写入失败时自动恢复。</span>
+              <pre class="mini-code"><code><span class="prompt">$</span> <span class="cmd-name">sshift add --edit github-com-personal</span>
+? Commit email → new@example.com
+<span class="success">✓ Identity updated and routing activated.</span>
 
-<span class="prompt">$</span> <span class="cmd-name">ssh -T</span> git@<span class="host">github.com</span>
-<span class="success">Hi Th1Humble! You've successfully
-authenticated.</span></code></pre>
+<span class="prompt">$</span> <span class="cmd-name">sshift rm github-com-personal</span>
+<span class="success">✓ Routing removed. SSH key files kept.</span></code></pre>
             </article>
           </div>
         </section>
@@ -906,7 +898,7 @@ authenticated.</span></code></pre>
             <li>Only records file paths<span class="zh">只记录路径</span></li>
             <li>Fingerprints from public keys only<span class="zh">指纹仅来自公钥</span></li>
             <li>Backup before every write<span class="zh">每次写入前备份</span></li>
-            <li>Reversible via <code>sshift rollback</code><span class="zh">随时可回滚</span></li>
+            <li>Automatic recovery on write failure<span class="zh">写入失败自动恢复</span></li>
             <li>Only edits its own managed block<span class="zh">只改自己的受管理块</span></li>
             <li>Native OpenSSH + Git only<span class="zh">只用原生 SSH 和 Git</span></li>
           </ul>

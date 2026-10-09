@@ -2,7 +2,7 @@
 
 [English](./README.md)
 
-为每个 Git 仓库使用正确的 SSH key。
+为每个 Git 仓库使用正确的 SSH key、提交姓名和邮箱。
 
 sshift 帮助开发者管理多个 SSH key，覆盖 GitHub、GitLab 及自定义 Git 主机。它在 `~/.ssh/config` 中写入一个受管理的配置块，让原生的 `git clone`、`git pull`、`git push` 直接生效——无需包装器、无需代理、无运行时开销。
 
@@ -20,8 +20,8 @@ OpenSSH 本身支持通过 `~/.ssh/config` 将不同主机路由到不同 key。
 
 sshift 让正确的做法变简单：
 
-1. 添加一个 profile（平台 + 账号 + key）
-2. sshift 帮你写好 SSH config
+1. 添加一个身份（平台 + 账号 + key + 提交姓名和邮箱）
+2. sshift 自动配置 SSH 访问和 Git 作者匹配
 3. 你继续正常使用 `git clone git@github.com:...`
 
 ## 安装
@@ -64,392 +64,114 @@ sudo mv sshift /usr/local/bin/sshift
 ## 快速开始
 
 ```bash
-# 新电脑：添加第一个身份
+# 已有 GitHub 配置也可以直接添加 GitLab 或其他平台
 sshift add
 
-# 查看当前环境
-sshift scan
+# 查看已配置的身份
+sshift list
 
-# 诊断某个仓库
-cd ~/my-project
+# 修改姓名、邮箱、平台地址或 key
+sshift add --edit gitlab-com-work
+
+# 在仓库内检查实际 SSH key 和新提交的作者
 sshift doctor
+
+# 删除身份及其自动匹配规则，保留 SSH key 文件
+sshift rm gitlab-com-work
 ```
 
-## Host 是什么
+添加时选择平台、填写平台账号和提交姓名／邮箱，再选择已有 key 或生成新 key。sshift 展示公钥及平台登记入口，确认后同时保存身份并激活 SSH 和 Git 配置。
 
-在 SSH config 里，`Host` 是 OpenSSH 用来匹配 Git remote URL 的名字。
+你仍然需要把公钥登记到平台。之后正常使用 `git clone`、`git pull`、`git commit`、`git push`，不需要再执行应用或绑定命令。
 
-```text
-git@github.com:owner/repo.git
-    └───────── Git host: github.com
-```
+## 四个命令
 
-大多数场景下，`Host` 和 `HostName` 是一样的：
+| 命令 | 用途 |
+|------|------|
+| `sshift add` | 添加身份，自动配置 SSH key 和 Git 作者 |
+| `sshift add --edit <name>` | 在同一个向导中修改已有身份并立即生效 |
+| `sshift list` | 查看身份、Git host、提交作者和配置状态 |
+| `sshift rm <name>` | 移除身份及其路由，保留 key 文件 |
+| `sshift doctor` | 检查当前仓库实际生效的 SSH key、作者和提交者 |
+| `sshift doctor --fix` | 重新生成受管理配置，并协助修复当前仓库身份 |
 
-```sshconfig
-Host github.com
-  HostName github.com
-  User git
-  IdentityFile ~/.ssh/id_ed25519_github
-  IdentitiesOnly yes
-```
+`add --yes` 跳过最后的配置激活确认，向导中的其他问题仍会询问。`rm --yes` 跳过删除确认。
 
-- `Host` / Git host：SSH clone 地址里的主机部分
-- `HostName`：OpenSSH 真正连接的服务器地址
-- `IdentityFile`：这个 host 使用的 SSH key
-- `IdentitiesOnly yes`：避免 OpenSSH 继续尝试无关的 key
+### 修改身份
 
-## SSH 访问身份 vs Git 提交身份
+`add --edit` 展示当前值，只选择需要修改的字段即可。可以修改提交姓名、邮箱、平台地址、SSH host／alias、平台账号、SSH 用户或 key。
 
-SSH key 和 Git author 解决的是两件事：
+邮箱修改后，匹配的仓库后续提交会使用新邮箱；已存在的提交作者不会被改写。已有的旧 profile 如果缺少姓名或邮箱，使用这个向导补齐，不需要手动编辑 TOML。
 
-- **SSH key** 决定你能不能 `clone`、`pull`、`push`
-- **Git author** 决定 commit 里写入的 `user.name` 和 `user.email`
-
-用对 SSH key **不会**自动切换 commit author。工作电脑上最容易出现的问题就是：个人 GitHub 仓库可以正常 push，但 commit author 还是公司邮箱。
-
-sshift 把这两件事分开处理：
+### 检查和修复
 
 ```bash
-# 1. 先把 Git host 路由到正确的 SSH key
-sshift add
-sshift scan
-
-# 2. 提交前，先检查当前仓库身份
 cd ~/project
 sshift doctor
-
-# 3. 只有 doctor 显示当前仓库 author 和 profile 不一致时，再绑定
-sshift bind github-personal
-
-# 4. 确认新 commit 会使用哪个作者信息
-git config --local user.name
-git config --local user.email
+sshift doctor --fix
 ```
 
-`sshift bind <profile>` 只写当前仓库的 local config：
+doctor 读取 Git 实际生成的作者与提交者身份，而不只是显示配置文件。它检查 SSH 实际选中的 key，并测试平台认证。
+
+已有仓库的 local/worktree `user.name`、`user.email` 会覆盖自动身份。`add` 在当前仓库发现这种情况时会询问是否迁移；其他已有仓库可以运行 `doctor --fix`，确认后清除这些覆盖值。仓库其他设置保持原样。
+
+环境变量 `GIT_AUTHOR_*`、`GIT_COMMITTER_*`、命令行 `git -c` 或其他 include 中的身份设置仍可能覆盖规则。doctor 会显示不一致和配置来源；它不会修改你的 shell 环境。
+
+## 自动匹配如何工作
+
+每个身份包含两部分：
+
+- SSH key 决定拉取、推送时用哪个平台账号认证。
+- 提交姓名和邮箱决定新 commit 的作者信息；平台账号名不一定等于提交姓名。
+
+sshift 在 `~/.ssh/config` 中维护自己的配置块，在 Git 全局配置中加入自己的 include 入口，并生成基于 remote URL 的条件规则：
+
+```text
+仓库 remote 是 git@github.com:owner/repo.git
+→ 使用 GitHub key，以及 GitHub 身份的提交姓名和邮箱
+
+仓库 remote 是 git@git.company.com:team/repo.git
+→ 使用公司 key，以及公司身份的提交姓名和邮箱
+```
+
+SSH、带端口的 SSH URL 和 HTTPS URL 都能匹配提交作者。HTTPS 的拉取／推送使用 HTTPS 凭据，不使用 SSH key。
+
+这些规则对已有仓库和之后 clone 的仓库都生效。工具不需要一直运行，不安装 Git hooks，也不包装 Git 命令。Git 原有全局姓名／邮箱字段保持不变；未匹配的仓库继续使用原有配置。
+
+### 同平台多个账号
+
+当同一个平台已经有身份时，添加向导会创建独立 SSH alias。例如：
 
 ```bash
-git config --local user.name  "Your Name"
-git config --local user.email "you@example.mail"
+git clone git@github.com:personal/repo.git
+git clone git@github.com-work:company/repo.git
 ```
 
-它不会修改全局 Git 身份，也不会重写已经存在的旧 commit。
+两个 host 分别选择各自的 key 和提交作者。alias 由向导填写，示例名称可以不同。如果你在已有仓库里添加对应身份，向导可协助更新当前仓库的 origin；其他仓库可运行 `doctor --fix` 选择身份。
 
-## 命令一览
+添加时遇到已有非受管理 Host，默认提供独立 alias，保留原来的路由。也可以明确选择让该 host 优先使用所选 key；原有配置文本仍然保留，可能存在其他候选 key，doctor 会提示。
 
-| 命令 | 说明 |
-|------|------|
-| `sshift add` | 交互式添加一个或多个 SSH 身份 |
-| `sshift scan` | 扫描本地 SSH key、config 和 Git 身份 |
-| `sshift apply` | 从 profile 重新生成受管理的 SSH config 块 |
-| `sshift doctor` | 诊断当前 Git 仓库的 SSH 身份 |
-| `sshift bind <profile>` | 将 profile 的 Git 作者信息写入当前仓库 |
-| `sshift rollback` | 从备份恢复 SSH config |
-| `sshift profile list` | 列出所有已配置的 profile |
-| `sshift profile rm <name>` | 删除一个 profile |
+## 配置与恢复
 
-### `sshift add`
+身份保存到 `~/.config/sshift/profiles.toml`，Git 条件规则保存到同目录的 `git.conf` 和 `identities/`。
 
-交互式添加 SSH 身份：
+每次添加、修改、删除或修复前，相关配置都会备份到 `~/.config/sshift/backups/`。SSH、Git 和身份存储按一次操作更新；写入失败时自动恢复本次改动。删除最后一个身份时，工具移除自己的 SSH 配置块和 Git include 入口。
 
-1. 选择主机模板（GitHub、GitLab 或自定义）
-2. 输入账号名
-3. 生成新 SSH key 或选择已有 key
-4. 预览受管理的 SSH config 块
-5. 可选择立即应用
+仓库修复也会单独备份 repository config，失败时恢复。备份不包含私钥内容；成功操作的历史备份保留在本地。
 
-一次会话中可以添加多个 profile——每添加一个后会询问"是否继续添加？"
+## 要求和边界
 
-```bash
-sshift add          # 交互式
-sshift add --yes    # 跳过最终确认直接应用
-```
-
-### `sshift scan`
-
-展示当前 SSH 和 Git 环境状态：
-
-- 可用的 SSH key 及指纹
-- 已有的 `~/.ssh/config` Host 条目（受管理的和非受管理的）
-- 全局 Git 身份（`user.name` / `user.email`）
-- 已配置的 sshift profile
-
-```bash
-sshift scan
-```
-
-### `sshift apply`
-
-从所有已保存的 profile 重新生成受管理的 SSH config 块，写入 `~/.ssh/config`。每次写入前自动创建备份。
-
-```bash
-sshift apply            # 写入前确认
-sshift apply --preview  # 只打印不写入
-sshift apply --yes      # 跳过确认直接写入
-```
-
-如果你的 SSH config 中有非受管理的 `Host` 条目与 profile 冲突，sshift 会发出警告但不会覆盖它。
-
-### `sshift doctor`
-
-诊断当前 Git 仓库：
-
-- 读取 `origin` remote URL
-- 匹配对应的 profile
-- 检查 OpenSSH 实际会使用哪个 key（`ssh -G`）
-- 测试 SSH 认证（`ssh -T`）
-- 对比本地 Git 身份与 profile
-
-```bash
-cd ~/my-project
-sshift doctor
-```
-
-输出示例：
-
-```
-Repository
-  origin: git@github.com:th1humble/sshift.git
-  host:   github.com
-
-Matched Profile
-  name: github-com-th1humble
-  key:  ~/.ssh/id_ed25519_github_com
-
-Git Identity
-  local:  (unset) <(unset)>
-  global: dev <dev@example.mail>
-
-OpenSSH Resolution
-  identityfile: ~/.ssh/id_ed25519_github_com
-
-SSH Auth
-  ok: Authenticated as Th1Humble
-```
-
-### `sshift bind <profile>`
-
-将 profile 的 `git_name` 和 `git_email` 写入当前仓库的 local config。适用于需要按仓库区分提交身份的场景。
-
-profile 必须配置了 `git_name` 和 `git_email`。你可以直接编辑 `~/.config/sshift/profiles.toml` 添加这些字段。
-
-```bash
-sshift bind github-com-th1humble
-sshift bind github-com-th1humble --yes   # 跳过确认
-```
-
-### `sshift rollback`
-
-从最近的备份恢复 `~/.ssh/config`。
-
-```bash
-sshift rollback                    # 恢复最近的备份
-sshift rollback --backup <path>    # 恢复指定备份文件
-sshift rollback --yes              # 跳过确认
-```
-
-### `sshift profile list`
-
-以表格形式列出所有已配置的 profile。
-
-```bash
-sshift profile list
-```
-
-### `sshift profile rm <name>`
-
-删除一个 profile 并重新生成 SSH config 块。**不会**删除 SSH key 文件。
-
-```bash
-sshift profile rm github-com-th1humble
-sshift profile rm github-com-th1humble --yes   # 跳过确认
-```
-
-## 使用场景
-
-### 新电脑
-
-从零开始，没有任何 SSH key：
-
-```mermaid
-flowchart TD
-  A["安装 sshift"] --> B["运行 sshift add"]
-  B --> C["选择 Git host"]
-  C --> D["生成或选择 SSH key"]
-  D --> E["复制公钥到 Git 平台"]
-  E --> F{"继续添加身份？"}
-  F -- 是 --> C
-  F -- 否 --> G["应用受管理的 SSH config"]
-  G --> H["运行 sshift scan"]
-  H --> I["正常使用 git clone"]
-```
-
-```bash
-# 1. 安装
-curl -fsSL https://th1humble.github.io/sshift/install.sh | sh
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
-source ~/.zshrc
-
-# 2. 添加一个或多个 Git 身份
-sshift add
-# → 选择 GitHub，输入账号，生成 key
-# → 复制打印出的公钥到 GitHub Settings → SSH Keys
-# → "是否继续添加？" → 是
-# → 选择 GitLab，输入账号，生成 key
-# → 复制公钥到 GitLab
-# → "是否继续添加？" → 否
-# → 应用受管理的 SSH config 块
-
-# 3. 验证本机路由
-sshift scan
-
-# 4. 正常使用 Git
-git clone git@github.com:owner/repo.git
-```
-
-### 已有工作电脑
-
-你已经有公司的 SSH key 和 Git 配置，想增加个人 GitHub 身份而不破坏现有配置：
-
-```mermaid
-flowchart TD
-  A["运行 sshift scan"] --> B["查看已有 SSH key 和 Git host"]
-  B --> C["运行 sshift add"]
-  C --> D["添加缺失的个人/工作身份"]
-  D --> E["预览受管理的 SSH config 块"]
-  E --> F{"是否与已有非受管理 Host 冲突？"}
-  F -- 否 --> G["应用"]
-  F -- 是 --> H["先停下，用 sshift apply --preview 检查"]
-  G --> I["在各个仓库运行 sshift doctor"]
-  H --> I
-```
-
-```bash
-# 1. 查看当前配置
-sshift scan
-
-# 2. 添加缺失的身份
-sshift add
-# → sshift 先展示已有 profile
-# → 添加 GitHub profile 和新 key
-# → 复制打印出的公钥到 Git 平台
-# → 应用前预览受管理的 SSH config 块
-
-# 3. 如果不确定，先只预览，不写入
-sshift apply --preview
-
-# 4. 在真实仓库里诊断
-cd ~/work-project && sshift doctor
-cd ~/personal-project && sshift doctor
-```
-
-### 日常使用
-
-配置完成后，sshift 是透明的。你正常使用 Git：
-
-```bash
-git clone git@github.com:user/repo.git    # 使用 GitHub key
-git clone git@gitlab.com:team/project.git  # 使用 GitLab key
-git push                                    # 根据 host 自动选择正确的 key
-```
-
-OpenSSH 读取 `~/.ssh/config` 并将每个 host 路由到正确的 key。sshift 已经写好了配置——它不需要运行。
-
-### 出了问题
-
-```bash
-# 诊断
-sshift doctor
-# → 显示 SSH 会使用哪个 key，认证是否成功
-
-# 如果是 sshift 配置的问题，回滚
-sshift rollback
-```
-
-## 工作原理
-
-### 受管理的 SSH Config 块
-
-sshift 在 `~/.ssh/config` 顶部写入一个明确标记的块：
-
-```sshconfig
-# --- sshift managed start ---
-# profile: github-com-th1humble
-Host github.com
-  HostName github.com
-  User git
-  IdentityFile ~/.ssh/id_ed25519_github_com
-  IdentitiesOnly yes
-
-# profile: gitlab-com-work
-Host gitlab.com
-  HostName gitlab.com
-  User git
-  IdentityFile ~/.ssh/id_ed25519_gitlab_com
-  IdentitiesOnly yes
-# --- sshift managed end ---
-```
-
-受管理块之外的所有内容原样保留。sshift 绝不触碰非受管理的内容。
-
-### Profile 存储
-
-Profile 存储在 `~/.config/sshift/profiles.toml`：
-
-```toml
-[[profiles]]
-name = "github-com-th1humble"
-host = "github.com"
-hostname = "github.com"
-user = "git"
-account = "th1humble"
-identity_file = "~/.ssh/id_ed25519_github_com"
-public_key_file = "~/.ssh/id_ed25519_github_com.pub"
-fingerprint = "SHA256:..."
-```
-
-### 备份
-
-每次 sshift 写入 `~/.ssh/config` 前，会先将当前文件复制到：
-
-```
-~/.config/sshift/backups/ssh_config.<时间戳>
-```
-
-使用 `sshift rollback` 恢复任意备份。
-
-## 安全保证
-
-- 绝不上传 SSH key
-- 绝不读取私钥文件内容
-- 绝不存储私钥内容——只记录文件路径
-- 指纹仅从公钥派生
-- 只编辑 SSH config 中自己的受管理块
-- 绝不改写非受管理的 SSH config 条目
-- 每次写入前创建备份
-- 所有受管理的修改都可通过 `sshift rollback` 回滚
-- 使用原生 OpenSSH（`ssh-keygen`、`ssh -T`、`ssh -G`）
-- 使用原生 Git（`git config`、`git remote`）
-
-## 限制（v1）
-
-- **每个 host 只能一个 profile。** 同一个 `github.com` 上的两个账号需要 host alias，计划在 v2 实现。
-- **不管理 SSH agent。** sshift 配置 `IdentityFile` 和 `IdentitiesOnly`——不启动或管理 `ssh-agent`。
-- **不自动切换 Git 身份。** 手动使用 `sshift bind`，或自行在 `~/.gitconfig` 中配置 `includeIf`。
+- 支持 macOS 和 Linux，自动作者匹配需要 Git 2.36 或以上。
+- Git 的 remote 条件检查所有 remote；如果一个仓库同时配置多个匹配不同身份的 remote，可能匹配多个作者规则。doctor 会检查实际作者；`doctor --fix` 可为选定身份补充仓库规则。修改 remote 后应重新检查。
+- 同平台多账号通过 SSH alias 区分；HTTPS 地址不能使用 SSH alias 来区分账号。
+- 不管理 SSH agent，也不修改已有 commit 的作者。
+- 新 key 默认使用 ed25519，已有 key 文件不会被覆盖，私钥内容由原生 OpenSSH 处理。
 
 ## 卸载
 
-```bash
-sudo rm -f /usr/local/bin/sshift
+先运行 `sshift list`，再用 `sshift rm <name>` 移除各个受管理身份。移除最后一个身份后，自动配置入口也会清理，SSH key 文件仍保留。
 
-# 可选：删除 sshift 配置和备份
-rm -rf ~/.config/sshift
-
-# 手动从 ~/.ssh/config 中删除受管理块，
-# 或在卸载前恢复备份：
-# sshift rollback
-```
+然后删除安装位置的 `sshift` 二进制。可按需删除 `~/.config/sshift` 中的配置和备份。
 
 ## 许可证
 

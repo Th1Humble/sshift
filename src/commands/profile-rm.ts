@@ -1,6 +1,7 @@
 import { confirm } from "@inquirer/prompts";
 import { loadProfiles, removeProfile } from "../core/profiles";
 import { applyProfilesToSshConfig } from "../core/ssh-config";
+import { saveAndApplyProfiles } from "../core/identity-config";
 import { formatKeyValue, statusOk } from "../utils/output";
 
 interface ProfileRemoveOptions {
@@ -30,14 +31,9 @@ export async function profileRemoveCommand(
     return;
   }
 
-  await removeProfile(name);
-  const nextStore = await loadProfiles();
-  const backup = await applyProfilesToSshConfig(
-    nextStore.profiles,
-    `profile remove ${name}`,
-  );
+  const backup = await saveAndApplyProfiles(store.profiles.filter((item) => item.name !== name), `remove ${name}`);
 
   console.log(statusOk(`Removed profile: ${name}`));
   console.log(formatKeyValue("Key kept", profile.identity_file));
-  console.log(formatKeyValue("Backup", backup.file_path));
+  console.log(formatKeyValue("Backup", backup));
 }

@@ -2,7 +2,7 @@
 
 [中文文档](./README.zh-CN.md)
 
-Use the right SSH key for every Git repo.
+Use the right SSH key and commit author for every Git repo.
 
 sshift helps developers manage multiple SSH keys across GitHub, GitLab, and custom Git hosts. It writes a managed block into `~/.ssh/config` so native `git clone`, `git pull`, and `git push` just work — no wrappers, no agents, no runtime overhead.
 
@@ -64,392 +64,102 @@ sudo mv sshift /usr/local/bin/sshift
 ## Quick Start
 
 ```bash
-# New computer: add your first identity
-sshift add
-
-# Check what sshift sees
-sshift scan
-
-# Diagnose a repo
-cd ~/my-project
-sshift doctor
+sshift add                       # Add GitHub, GitLab, or another platform
+sshift list                      # Inspect identities and configuration status
+sshift add --edit gitlab-com-work # Change an existing identity
+sshift doctor                    # Check the current repo's actual key and author
+sshift rm gitlab-com-work         # Remove routing, keep SSH key files
 ```
 
-## Host Terminology
+The add wizard asks for the platform, account, commit author name/email, and an existing or new SSH key. It shows the public key and registration link, then activates SSH and automatic Git author routing together after confirmation.
 
-In SSH config, `Host` is the name OpenSSH matches from your Git remote URL.
+Register the public key with your platform, then use normal `git clone`, `git pull`, `git commit`, and `git push` commands. No separate apply or bind step is required.
+
+## Four Commands
+
+| Command | Purpose |
+|---------|---------|
+| `sshift add` | Add an identity and activate SSH/Git routing |
+| `sshift add --edit <name>` | Edit selected fields and activate changes |
+| `sshift list` | Show identities, Git hosts, commit authors, and configuration status |
+| `sshift rm <name>` | Remove an identity and its routing without deleting SSH keys |
+| `sshift doctor` | Check the actual SSH key, author, and committer in the current repo |
+| `sshift doctor --fix` | Regenerate managed rules and help repair repository identity |
+
+`add --yes` skips the final activation confirmation; other wizard questions remain interactive. `rm --yes` skips removal confirmation.
+
+### Editing
+
+The edit wizard displays existing values. Select the fields to change: commit name/email, platform hostname, SSH host/alias, platform account, SSH user, or key. Email changes apply to future commits in matching repositories; existing commits retain their original authors.
+
+Older profiles without a commit name/email can be completed with `sshift add --edit <name>`, without editing TOML manually.
+
+### Diagnosis and Repair
+
+```bash
+cd ~/project
+sshift doctor
+sshift doctor --fix
+```
+
+Doctor reads Git's actual author and committer identities, shows the SSH keys OpenSSH resolves, and tests platform authentication.
+
+Existing repository-local or worktree `user.name`/`user.email` values override automatic routing. Add offers to migrate the current repository when needed; use `doctor --fix` in other existing repositories to clear these overrides after confirmation. Other repository settings are preserved.
+
+`GIT_AUTHOR_*`, `GIT_COMMITTER_*`, `git -c`, and other Git includes may still override the rules. Doctor reports mismatches and configuration sources; it does not edit your shell environment.
+
+## Automatic Identity Selection
+
+SSH keys select the account for fetch/push authentication. Git author names and emails select the identity written into new commits. A platform account name need not be the same as your commit author name.
+
+sshift maintains a block in `~/.ssh/config`, adds a managed include entry to global Git configuration, and generates native remote-URL conditions:
 
 ```text
 git@github.com:owner/repo.git
-    └───────── Git host: github.com
+→ GitHub key + personal commit name/email
+
+git@git.company.com:team/repo.git
+→ Company key + company commit name/email
 ```
 
-For most setups, `Host` and `HostName` are the same:
+Author routing supports SCP-style SSH, SSH URLs with ports, and HTTPS URLs. HTTPS authentication uses HTTPS credentials rather than SSH keys.
 
-```sshconfig
-Host github.com
-  HostName github.com
-  User git
-  IdentityFile ~/.ssh/id_ed25519_github
-  IdentitiesOnly yes
-```
+Rules apply to existing repositories and future clones. No background process, hooks, or Git wrapper is needed. Existing global name/email fields remain intact, and unrelated repositories retain their original identity.
 
-- `Host` / Git host: the host part from your SSH clone URL
-- `HostName`: the real server OpenSSH connects to
-- `IdentityFile`: the SSH key OpenSSH uses for that host
-- `IdentitiesOnly yes`: prevents OpenSSH from trying unrelated keys
+### Multiple Accounts on One Platform
 
-## SSH Access vs Git Author
-
-SSH keys and Git authors solve different problems:
-
-- **SSH key** controls whether you can `clone`, `pull`, or `push`.
-- **Git author** controls the `user.name` and `user.email` written into commits.
-
-Using the right SSH key does **not** automatically change commit author. On a work computer, this is exactly how a personal GitHub repo can accidentally get commits authored with a company email.
-
-sshift handles both sides explicitly:
+When a host already has an identity, the wizard creates a separate SSH alias:
 
 ```bash
-# 1. Route this host to the right SSH key
-sshift add
-sshift scan
-
-# 2. Before committing, inspect the current repo identity
-cd ~/project
-sshift doctor
-
-# 3. Bind only if doctor shows the repo author does not match the profile
-sshift bind github-personal
-
-# 4. Verify what Git will write into new commits
-git config --local user.name
-git config --local user.email
+git clone git@github.com:personal/repo.git
+git clone git@github.com-work:company/repo.git
 ```
 
-`sshift bind <profile>` writes repo-local config only:
+Each host selects its own key and author. The alias is chosen in the wizard. Add can update the current repository's origin when adopting the new identity; `doctor --fix` can select an existing alias for other repositories.
 
-```bash
-git config --local user.name  "Your Name"
-git config --local user.email "you@example.mail"
-```
+For existing unmanaged Host entries, the wizard offers a separate alias by default to preserve routing. You may explicitly choose to prefer the selected key on that host while preserving the original config text. Additional candidate keys may remain; doctor reports them.
 
-It does not change your global Git identity and it does not rewrite old commits.
+## Configuration and Recovery
 
-## Commands
+Identities live in `~/.config/sshift/profiles.toml`; generated Git rules live in `git.conf` and `identities/` alongside it.
 
-| Command | Description |
-|---------|-------------|
-| `sshift add` | Interactively add one or more SSH identities |
-| `sshift scan` | Scan local SSH keys, config, and Git identity |
-| `sshift apply` | Regenerate the managed SSH config block from profiles |
-| `sshift doctor` | Diagnose SSH identity for the current Git repo |
-| `sshift bind <profile>` | Set repo-local Git author from a profile |
-| `sshift rollback` | Restore SSH config from a previous backup |
-| `sshift profile list` | List all configured profiles |
-| `sshift profile rm <name>` | Remove a profile |
+Before add, edit, remove, or repair, relevant files are backed up under `~/.config/sshift/backups/`. SSH configuration, Git routing, and profile storage are updated together. Failed writes automatically restore the operation's changes. Removing the last identity cleans up the managed SSH block and Git include entry.
 
-### `sshift add`
+Repository repairs have their own backup and failure recovery. Backups contain configuration, never private key contents; successful operations retain local historical backups.
 
-Interactive flow to add SSH identities:
+## Requirements and Boundaries
 
-1. Choose a host template (GitHub, GitLab, or custom)
-2. Enter your account name
-3. Generate a new SSH key or select an existing one
-4. Preview the managed SSH config block
-5. Optionally apply it immediately
-
-You can add multiple profiles in one session — sshift will ask "Add another?" after each one.
-
-```bash
-sshift add          # interactive
-sshift add --yes    # skip the final apply confirmation
-```
-
-### `sshift scan`
-
-Shows the current state of your SSH and Git environment:
-
-- Available SSH keys and their fingerprints
-- Existing `~/.ssh/config` host entries (managed and unmanaged)
-- Global Git identity (`user.name` / `user.email`)
-- Configured sshift profiles
-
-```bash
-sshift scan
-```
-
-### `sshift apply`
-
-Regenerates the managed SSH config block from all saved profiles and writes it to `~/.ssh/config`. A backup is created before every write.
-
-```bash
-sshift apply            # confirm before writing
-sshift apply --preview  # print the block without writing
-sshift apply --yes      # write without confirmation
-```
-
-If an unmanaged `Host` entry in your SSH config conflicts with a profile host, sshift warns you but does not overwrite it.
-
-### `sshift doctor`
-
-Diagnoses the current Git repository:
-
-- Reads the `origin` remote URL
-- Matches it to a configured profile
-- Checks which key OpenSSH would actually use (`ssh -G`)
-- Tests live SSH authentication (`ssh -T`)
-- Compares local Git identity against the profile
-
-```bash
-cd ~/my-project
-sshift doctor
-```
-
-Example output:
-
-```
-Repository
-  origin: git@github.com:th1humble/sshift.git
-  host:   github.com
-
-Matched Profile
-  name: github-com-th1humble
-  key:  ~/.ssh/id_ed25519_github_com
-
-Git Identity
-  local:  (unset) <(unset)>
-  global: dev <dev@example.mail>
-
-OpenSSH Resolution
-  identityfile: ~/.ssh/id_ed25519_github_com
-
-SSH Auth
-  ok: Authenticated as Th1Humble
-```
-
-### `sshift bind <profile>`
-
-Sets repo-local `user.name` and `user.email` from a profile. Useful when you want different commit identities per repo.
-
-The profile must have `git_name` and `git_email` configured. You can add these later by editing `~/.config/sshift/profiles.toml` directly.
-
-```bash
-sshift bind github-com-th1humble
-sshift bind github-com-th1humble --yes   # skip confirmation
-```
-
-### `sshift rollback`
-
-Restores `~/.ssh/config` from the most recent backup.
-
-```bash
-sshift rollback                    # restore latest backup
-sshift rollback --backup <path>    # restore a specific backup file
-sshift rollback --yes              # skip confirmation
-```
-
-### `sshift profile list`
-
-Lists all configured profiles in a table.
-
-```bash
-sshift profile list
-```
-
-### `sshift profile rm <name>`
-
-Removes a profile and regenerates the SSH config block. Does **not** delete the SSH key files.
-
-```bash
-sshift profile rm github-com-th1humble
-sshift profile rm github-com-th1humble --yes   # skip confirmation
-```
-
-## Scenarios
-
-### New Computer
-
-Starting from scratch with no SSH keys configured:
-
-```mermaid
-flowchart TD
-  A["Install sshift"] --> B["Run sshift add"]
-  B --> C["Choose Git host"]
-  C --> D["Generate or select SSH key"]
-  D --> E["Copy public key to Git host"]
-  E --> F{"Add another identity?"}
-  F -- Yes --> C
-  F -- No --> G["Apply managed SSH config"]
-  G --> H["Run sshift scan"]
-  H --> I["Use git clone normally"]
-```
-
-```bash
-# 1. Install
-curl -fsSL https://th1humble.github.io/sshift/install.sh | sh
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
-source ~/.zshrc
-
-# 2. Add one or more Git identities
-sshift add
-# → Choose GitHub, enter account, generate key
-# → Copy the printed public key to GitHub Settings → SSH Keys
-# → Choose "Add another?" → Yes
-# → Choose GitLab, enter account, generate key
-# → Copy public key to GitLab
-# → Choose "Add another?" → No
-# → Apply managed SSH config block
-
-# 3. Verify local routing
-sshift scan
-
-# 4. Clone and use Git normally
-git clone git@github.com:owner/repo.git
-```
-
-### Existing Work Computer
-
-You already have a company SSH key and Git config. You want to add a personal GitHub identity without breaking anything:
-
-```mermaid
-flowchart TD
-  A["Run sshift scan"] --> B["Review existing SSH keys and Git hosts"]
-  B --> C["Run sshift add"]
-  C --> D["Add the missing personal/work identity"]
-  D --> E["Preview managed SSH config block"]
-  E --> F{"Conflicts with existing unmanaged Host?"}
-  F -- No --> G["Apply"]
-  F -- Yes --> H["Stop and inspect with sshift apply --preview"]
-  G --> I["Run sshift doctor in each repo"]
-  H --> I
-```
-
-```bash
-# 1. See what's already configured
-sshift scan
-
-# 2. Add the missing identity
-sshift add
-# → sshift shows your existing profiles first
-# → Add GitHub profile with a new key
-# → Copy the printed public key to the Git host
-# → Preview the managed SSH config block before applying
-
-# 3. If you are unsure, preview without writing
-sshift apply --preview
-
-# 4. Diagnose real repositories
-cd ~/work-project && sshift doctor
-cd ~/personal-project && sshift doctor
-```
-
-### Daily Use
-
-After setup, sshift is invisible. You use Git normally:
-
-```bash
-git clone git@github.com:user/repo.git    # uses GitHub key
-git clone git@gitlab.com:team/project.git  # uses GitLab key
-git push                                    # correct key selected by host
-```
-
-OpenSSH reads `~/.ssh/config` and routes each host to the right key. sshift already wrote the config — it doesn't need to run.
-
-### Something Broke
-
-```bash
-# Diagnose
-sshift doctor
-# → Shows which key SSH would use, whether auth succeeds
-
-# If sshift config is the problem, roll back
-sshift rollback
-```
-
-## How It Works
-
-### Managed SSH Config Block
-
-sshift writes a clearly delimited block at the top of `~/.ssh/config`:
-
-```sshconfig
-# --- sshift managed start ---
-# profile: github-com-th1humble
-Host github.com
-  HostName github.com
-  User git
-  IdentityFile ~/.ssh/id_ed25519_github_com
-  IdentitiesOnly yes
-
-# profile: gitlab-com-work
-Host gitlab.com
-  HostName gitlab.com
-  User git
-  IdentityFile ~/.ssh/id_ed25519_gitlab_com
-  IdentitiesOnly yes
-# --- sshift managed end ---
-```
-
-Everything outside the managed block is preserved verbatim. sshift never touches unmanaged content.
-
-### Profile Storage
-
-Profiles are stored in `~/.config/sshift/profiles.toml`:
-
-```toml
-[[profiles]]
-name = "github-com-th1humble"
-host = "github.com"
-hostname = "github.com"
-user = "git"
-account = "th1humble"
-identity_file = "~/.ssh/id_ed25519_github_com"
-public_key_file = "~/.ssh/id_ed25519_github_com.pub"
-fingerprint = "SHA256:..."
-```
-
-### Backups
-
-Every time sshift writes to `~/.ssh/config`, it first copies the current file to:
-
-```
-~/.config/sshift/backups/ssh_config.<timestamp>
-```
-
-Use `sshift rollback` to restore any backup.
-
-## Safety Guarantees
-
-- Never uploads SSH keys
-- Never reads private key file content
-- Never stores private key content — only records file paths
-- Fingerprints are derived from public keys only
-- Only edits its own managed block in SSH config
-- Never rewrites unmanaged SSH config entries
-- Creates a backup before every write
-- All managed changes are reversible via `sshift rollback`
-- Uses native OpenSSH (`ssh-keygen`, `ssh -T`, `ssh -G`)
-- Uses native Git (`git config`, `git remote`)
-
-## Limitations (v1)
-
-- **One profile per host.** Two GitHub accounts on the same `github.com` host require host aliases, which is planned for v2.
-- **No SSH agent management.** sshift configures `IdentityFile` and `IdentitiesOnly` — it does not start or manage `ssh-agent`.
-- **No automatic Git identity switching.** Use `sshift bind` manually, or configure `includeIf` in your `~/.gitconfig` yourself.
+- macOS or Linux; Git 2.36 or newer for automatic author selection.
+- Git's remote condition checks every remote. A repository with remotes matching multiple identities can match multiple author rules. Doctor checks the actual result; `doctor --fix` can add a repository rule for the selected identity. Recheck after changing remotes.
+- Multiple accounts on one platform use SSH aliases. HTTPS URLs cannot use SSH aliases to distinguish accounts.
+- No SSH agent management or rewriting existing commits.
+- New keys use ed25519. Existing key files are never overwritten; native OpenSSH handles private keys.
 
 ## Uninstall
 
-```bash
-sudo rm -f /usr/local/bin/sshift
+Run `sshift list`, then `sshift rm <name>` for each managed identity. Removing the final identity also removes managed routing entry points while keeping SSH key files.
 
-# Optionally remove sshift config and backups
-rm -rf ~/.config/sshift
-
-# Remove the managed block from ~/.ssh/config manually,
-# or restore a pre-sshift backup:
-# sshift rollback (before uninstalling)
-```
+Delete the installed `sshift` binary. Optionally remove `~/.config/sshift` and its backups.
 
 ## License
 
