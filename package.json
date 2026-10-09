@@ -1,6 +1,6 @@
 {
   "name": "sshift",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Use the right SSH key and commit author for every Git repo.",
   "type": "module",
   "bin": {

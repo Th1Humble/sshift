@@ -40,13 +40,13 @@ curl -fsSL https://th1humble.github.io/sshift/install.sh | INSTALL_DIR=/usr/loca
 指定版本安装：
 
 ```bash
-curl -fsSL https://th1humble.github.io/sshift/install.sh | SSHIFT_VERSION=v0.2.0 sh
+curl -fsSL https://th1humble.github.io/sshift/install.sh | SSHIFT_VERSION=v0.2.1 sh
 ```
 
 也可以从 [GitHub Releases](https://github.com/Th1Humble/sshift/releases) 下载独立二进制：
 
 ```bash
-tar -xzf sshift-v0.2.0-darwin-arm64.tar.gz
+tar -xzf sshift-v0.2.1-darwin-arm64.tar.gz
 chmod +x sshift
 sudo mv sshift /usr/local/bin/sshift
 ```

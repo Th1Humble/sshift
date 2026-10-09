@@ -59,7 +59,9 @@ describe("automatic SSH and Git identity routing", () => {
       ["other", "git@other.example.com:repo.git", { git_name: "Original", git_email: "original@example.com" }],
     ] as const) {
       const run = await repo(ctx, name, url);
-      expect(await readCommitIdentity("AUTHOR", run)).toEqual({ name: expected.git_name, email: expected.git_email });
+      const author = await readCommitIdentity("AUTHOR", run);
+      expect(author.name).toBe(expected.git_name);
+      expect(author.email).toBe(expected.git_email);
       expect((await run("git", ["commit", "--allow-empty", "-qm", "identity check"])).exitCode).toBe(0);
       expect((await run("git", ["log", "-1", "--format=%an <%ae>"])).stdout.trim()).toBe(`${expected.git_name} <${expected.git_email}>`);
     }
