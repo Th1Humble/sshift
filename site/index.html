@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="sshift routes Git hosts to the right SSH key using native OpenSSH and Git. No wrappers, no agents."
+      content="Add GitHub, GitLab, or another Git platform without disrupting your existing setup. Use the right SSH key and commit name and email for each repository."
     />
-    <title>sshift - Git SSH key routing</title>
+    <title>sshift — The right Git identity, in every repo</title>
     <style>
       :root {
         color-scheme: light;
@@ -656,6 +656,44 @@
         .codebar { align-items: stretch; flex-direction: column; }
         .copy-button { width: 100%; }
       }
+      .focused-hero {
+        grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.92fr);
+        padding: 76px 0 60px;
+        border-top: 0;
+      }
+
+      .focused-hero h1 { max-width: 900px; }
+      .focused-hero .lead { max-width: 720px; margin-top: 18px; }
+      .hero-zh { margin: 18px 0 0; font-size: clamp(20px, 3vw, 28px); font-weight: 600; color: var(--accent-strong); }
+      .focused-hero .install { max-width: 720px; margin-top: 30px; }
+      .focused-hero .codebar { max-width: none; box-shadow: var(--shadow-sm); }
+      .focused-hero .terminal { width: 100%; }
+      .section-title h2 > .zh { margin-top: 10px; font-weight: 500; letter-spacing: normal; }
+      #problem .card h3 { line-height: 1.5; }
+      #problem .card .zh { line-height: 1.8; margin-top: 12px; }
+      .command-list { margin: 0; border-top: 1px solid var(--line); }
+      .command-row { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 32px; padding: 24px 0; border-bottom: 1px solid var(--line); }
+      .command-row dt { min-width: 0; }
+      .command-row dt code { display: block; overflow-wrap: anywhere; font-size: 17px; font-weight: 650; line-height: 1.6; }
+      .command-row dt .command-option { margin-top: 6px; font-size: 13px; color: var(--accent-strong); font-weight: 500; }
+      .command-row dd { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.8; }
+      .command-row .zh { margin-top: 8px; }
+      .command-note { margin-top: 20px; }
+      a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+
+      .hero-zh { font-size: clamp(18px, 2vw, 22px); line-height: 1.5; }
+      .hero-zh .zh { font-size: 15px; color: var(--accent-strong); font-weight: 500; }
+      .option-description { margin-top: 18px; }
+      .option-description > code { color: var(--accent-strong); font-size: 13px; }
+      .option-description p { margin: 6px 0 0; }
+      @media (max-width: 900px) {
+        .focused-hero { grid-template-columns: minmax(0, 1fr); }
+      }
+      @media (max-width: 620px) {
+        .focused-hero { padding: 42px 0; }
+        .focused-hero { grid-template-columns: minmax(0, 1fr); }
+        .command-row { grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 20px 0; }
+      }
     </style>
   </head>
   <body>
@@ -666,10 +704,8 @@
           <span>sshift</span>
         </a>
         <nav class="topnav" aria-label="Project links">
-          <a href="#problem">Problem</a>
-          <a href="#how">How it works</a>
-          <a href="#scenarios">Scenarios</a>
-          <a href="#safety">Safety</a>
+          <a href="#problem">Why sshift</a>
+          <a href="#commands">Commands</a>
           <a href="https://github.com/Th1Humble/sshift">GitHub</a>
         </nav>
       </header>
@@ -677,57 +713,44 @@
 
     <div class="shell">
       <main id="top">
-        <section class="hero" aria-labelledby="hero-title">
+        <section class="hero focused-hero" aria-labelledby="hero-title">
           <div>
-            <p class="eyebrow"><span class="dot"></span> Zero runtime. Pure config.</p>
-            <h1 id="hero-title">Stop getting <code style="color:var(--red)">Permission denied</code> on the wrong account.</h1>
+            <p class="eyebrow">GitHub · GitLab · Any Git Host</p>
+            <h1 id="hero-title">The right key.<br />The right commit author.</h1>
+            <p class="hero-zh">Different platforms. Different identities.<span class="zh" lang="zh-CN">不同平台，用不同身份。</span></p>
             <p class="lead">
-              sshift writes your <code>~/.ssh/config</code> so each Git host uses the right key.
-              Then it gets out of the way — <strong>native git, native SSH, no wrapper</strong>.
-              <span class="zh">sshift 帮你写好 <code>~/.ssh/config</code>，让不同 Git host 走正确的 key。之后还是原生 git 和 SSH，不包命令、不常驻。</span>
+              Set up each Git identity once. sshift handles SSH keys and commit author settings for matching repositories, so you can keep using Git as usual.
+              <span class="zh" lang="zh-CN">配置一次身份，sshift 就会为匹配的仓库使用对应的 SSH key、提交姓名和邮箱。之后照常使用 Git。</span>
             </p>
-
-            <div class="actions">
-              <a class="button primary" href="https://github.com/Th1Humble/sshift#readme">Docs</a>
-              <a class="button" href="https://github.com/Th1Humble/sshift/blob/main/README.zh-CN.md">中文文档</a>
-            </div>
-
             <div class="install" id="install">
-              <p class="install-label">Install</p>
+              <p class="install-label">Install sshift</p>
               <div class="codebar" role="group" aria-label="Install command">
                 <div class="command-text">
-                  <span class="prompt">$</span>
+                  <span class="prompt" aria-hidden="true">$</span>
                   <code id="install-command">curl -fsSL https://th1humble.github.io/sshift/install.sh | sh</code>
                 </div>
                 <button class="copy-button" type="button" data-copy-target="install-command">Copy</button>
               </div>
-              <p class="hint">
-                Installs to <code>~/.local/bin</code>. No sudo needed.
-                <span class="zh">默认安装到 <code>~/.local/bin</code>，通常不需要 sudo。</span>
-                <span class="zh">macOS and Linux only for now. 暂不支持 Windows。</span>
-              </p>
+              <p class="hint">macOS &amp; Linux · Git 2.36+ · <a href="https://github.com/Th1Humble/sshift/blob/main/README.zh-CN.md">中文文档</a></p>
             </div>
           </div>
-
-          <div class="terminal" aria-label="sshift doctor demo">
+          <div class="terminal" aria-label="sshift identity routing demo">
             <div class="terminal-head">
               <span class="traffic r"></span>
               <span class="traffic y"></span>
               <span class="traffic g"></span>
             </div>
             <div class="terminal-body">
-              <div class="terminal-line"><span class="prompt">$</span> <span class="cmd">sshift doctor</span></div>
+              <div class="terminal-line"><span class="prompt">$</span> <span class="cmd">sshift add</span></div>
+              <div class="terminal-line muted">? Platform &nbsp; <span class="key">GitLab</span></div>
+              <div class="terminal-line muted">? Commit email &nbsp; <span class="key">work@example.com</span></div>
               <div class="terminal-line">&nbsp;</div>
-              <div class="terminal-line muted">Repository</div>
-              <div class="terminal-line">  origin: git@github.com:th1humble/sshift.git</div>
-              <div class="terminal-line">  host:   <span class="key">github.com</span></div>
+              <div class="terminal-line"><span class="ok">✓</span> SSH key routed to gitlab.company.com</div>
+              <div class="terminal-line"><span class="ok">✓</span> Commit author set to Work Name</div>
               <div class="terminal-line">&nbsp;</div>
-              <div class="terminal-line muted">Matched Profile</div>
-              <div class="terminal-line">  name: github-com-th1humble</div>
-              <div class="terminal-line">  key:  ~/.ssh/id_ed25519_github_com</div>
-              <div class="terminal-line">&nbsp;</div>
-              <div class="terminal-line muted">SSH Auth</div>
-              <div class="terminal-line">  <span class="ok">ok</span>: Authenticated as Th1Humble</div>
+              <div class="terminal-line"><span class="prompt">$</span> <span class="cmd">git commit -m "ship it"</span></div>
+              <div class="terminal-line muted">[main 7ab31c2] ship it</div>
+              <div class="terminal-line"> Author: Work Name &lt;<span class="key">work@example.com</span>&gt;</div>
               <div class="terminal-line cursor">&nbsp;</div>
             </div>
           </div>
@@ -735,178 +758,60 @@
 
         <section id="problem" aria-labelledby="problem-title">
           <div class="section-title">
-            <h2 id="problem-title">The actual pain</h2>
-            <p>
-              You already have a working company setup. Adding a personal GitHub key shouldn't break it.
-              <span class="zh">公司 Git 已经能用时，再加个人 GitHub，不应该把现有配置搞乱。</span>
-            </p>
+            <h2 id="problem-title">What sshift solves<span class="zh" lang="zh-CN">解决什么问题</span></h2>
           </div>
-
-          <div class="split">
-            <article class="card pain-card bad">
-              <h3>Without sshift</h3>
-              <p>
-                You clone a personal repo on your work laptop. <code>Permission denied (publickey)</code>.
-                You Google the SSH config format, paste something in, try again. It works — but then you push a commit
-                and realize the author says <code>work@example.com</code>. Already on GitHub. Can't undo.
-              </p>
-              <span class="zh">在公司电脑 clone 个人仓库，Permission denied。查了半天 SSH config 格式，终于通了——结果 push 上去才发现 commit 邮箱是公司的，已经推上去了。</span>
-              <pre class="mini-code"><code><span class="prompt">$</span> <span class="cmd-name">git push</span>
-<span class="warning">Permission denied (publickey).</span>
-
-<span class="comment"># 30 minutes later...</span>
-<span class="prompt">$</span> <span class="cmd-name">git log</span> --oneline -1
-a1b2c3d feat: add feature (<span class="warning">work@example.com</span>)</code></pre>
+          <div class="grid">
+            <article class="card">
+              <h3>Add another Git host without starting over.</h3>
+              <p>Already using GitHub? Add GitLab or your company's Git server without changing what already works.</p>
+              <span class="zh" lang="zh-CN">GitHub 已经配好了？直接添加 GitLab 或公司 Git 服务，不用重新折腾现有配置。</span>
             </article>
-            <article class="card pain-card good">
-              <h3>With sshift</h3>
-              <p>
-                Add an identity, register its public key, and sshift configures SSH and Git author routing.
-                Run <code>sshift doctor</code> in any repo to confirm which key and identity it uses.
-              </p>
-              <span class="zh">添加身份并登记公钥，SSH key 和提交姓名、邮箱自动匹配。doctor 随时确认实际使用的身份。</span>
-              <pre class="mini-code"><code><span class="prompt">$</span> <span class="cmd-name">sshift add</span>        <span class="comment"># one wizard, SSH + author ready</span>
-<span class="prompt">$</span> <span class="cmd-name">git clone</span> git@<span class="host">github.com</span>:me/repo.git
-<span class="prompt">$</span> <span class="cmd-name">sshift doctor</span>     <span class="comment"># confirms: right key, right author</span></code></pre>
+            <article class="card">
+              <h3>Use the right commit identity.</h3>
+              <p>Personal projects use your personal email. Work repositories use your work email. No need to switch Git configs before every commit.</p>
+              <span class="zh" lang="zh-CN">个人项目用私人邮箱，公司项目用工作邮箱。不用每次提交前手动切换 Git 配置。</span>
+            </article>
+            <article class="card">
+              <h3>Use the right SSH key.</h3>
+              <p>Each Git host gets its own SSH key. Need multiple accounts on the same platform? Use separate SSH aliases.</p>
+              <span class="zh" lang="zh-CN">不同 Git 平台使用各自的 SSH key。同一个平台有多个账号，也可以通过 SSH 别名区分。</span>
             </article>
           </div>
         </section>
 
-        <section id="how" aria-labelledby="how-title">
+        <section id="commands" aria-labelledby="commands-title">
           <div class="section-title">
-            <h2 id="how-title">How it works</h2>
-            <p>
-              Configure once, then forget sshift exists. It doesn't run during git operations.
-              <span class="zh">配置一次，之后继续正常用 git。git 操作时不需要 sshift 参与。</span>
-            </p>
+            <h2 id="commands-title">Four commands.<span class="zh" lang="zh-CN">就四个命令。</span></h2>
+            <p>Start with <code>sshift add</code>. Add your public key to the Git platform, and you're ready to go.<span class="zh" lang="zh-CN">先运行 <code>sshift add</code>，把公钥添加到对应的 Git 平台，就可以正常使用了。</span></p>
           </div>
-
-          <div class="steps">
-            <article class="step">
-              <span class="number">1</span>
-              <h3>Add identities</h3>
-              <p>Pick a host (GitHub, GitLab, or custom), name your account, generate or select a key.</p>
-              <span class="zh">选平台、填账号、生成或选择 key。</span>
-            </article>
-            <article class="step">
-              <span class="number">2</span>
-              <h3>Config is written</h3>
-              <p>sshift writes a managed block in <code>~/.ssh/config</code>. A backup is created first. Your existing config stays untouched.</p>
-              <span class="zh">写入受管理块，已有配置不动，写入前备份。</span>
-            </article>
-            <article class="step">
-              <span class="number">3</span>
-              <h3>Use git normally</h3>
-              <p><code>git clone</code>, <code>push</code>, <code>pull</code> — OpenSSH reads the config and picks the right key. sshift is not involved.</p>
-              <span class="zh">正常用 git。OpenSSH 读 config 选 key，sshift 不参与。</span>
-            </article>
-          </div>
-
-          <div style="margin-top: 20px;">
-            <h3 style="font-size:15px; margin:0 0 12px; color:var(--muted);">What sshift does NOT do</h3>
-            <ul class="not-list">
-              <li><span class="icon">&#x2717;</span> Wrap or intercept git commands<span class="zh">不包装、不拦截 git 命令</span></li>
-              <li><span class="icon">&#x2717;</span> Run as a background daemon<span class="zh">不作为后台进程常驻</span></li>
-              <li><span class="icon">&#x2717;</span> Read or store private key content<span class="zh">不读取、不存储私钥内容</span></li>
-              <li><span class="icon">&#x2717;</span> Manage ssh-agent<span class="zh">不接管 ssh-agent</span></li>
-            </ul>
-          </div>
-        </section>
-
-        <section id="scenarios" aria-labelledby="scenarios-title">
-          <div class="section-title">
-            <h2 id="scenarios-title">Common scenarios</h2>
-            <p>
-              Works for both a fresh machine and an already-configured work laptop.
-              <span class="zh">新电脑能从零配置；已有工作电脑也能增量接入。</span>
-            </p>
-          </div>
-
-          <div class="scenario-grid">
-            <article class="scenario">
-              <h3>New computer</h3>
-              <p>Start from zero. Add a platform identity with one wizard.</p>
-              <span class="zh">新电脑从零开始，一个向导配置一个平台身份。</span>
-              <pre class="mini-code"><code><span class="prompt">$</span> <span class="cmd-name">sshift add</span>
-? Host template → <span class="host">GitHub</span>
-? Account       → th1humble
-? Commit name   → Th1Humble
-? Commit email  → personal@example.com
-? SSH key       → Generate new
-<span class="success">✓ Public key printed — add to GitHub</span>
-
-<span class="success">✓ SSH and Git author routing activated.</span>
-
-<span class="prompt">$</span> <span class="cmd-name">sshift add</span>
-<span class="comment"># add GitLab whenever you need it</span></code></pre>
-            </article>
-
-            <article class="scenario">
-              <h3>Existing work laptop</h3>
-              <p>Company config already works. Add GitHub without touching it.</p>
-              <span class="zh">公司配置已经好了，增量加 GitHub 不影响现有的。</span>
-              <pre class="mini-code"><code><span class="prompt">$</span> <span class="cmd-name">sshift add</span>
-<span class="comment"># select GitHub, commit name/email and key</span>
-<span class="comment"># existing company config is preserved</span>
-<span class="success">✓ SSH and Git author routing activated.</span>
-
-<span class="prompt">$</span> <span class="cmd-name">sshift list</span>
-  github-com-personal  personal@example.com
-  gitlab-com-work      work@example.com</code></pre>
-            </article>
-
-            <article class="scenario">
-              <h3>Check author before committing</h3>
-              <p>Git selects the author automatically. Doctor checks the actual identity and helps migrate old repository settings.</p>
-              <span class="zh">Git 自动匹配提交身份。doctor 检查实际作者，并协助迁移旧仓库的覆盖设置。</span>
-              <pre class="mini-code"><code><span class="prompt">$</span> <span class="cmd-name">sshift doctor</span>
-  Actual Commit Identity
-  Author: Th1Humble &lt;personal@example.com&gt;
-  Committer: Th1Humble &lt;personal@example.com&gt;
-<span class="success">✓ New commits use the expected name and email.</span>
-
-<span class="comment"># migrate an old repo with local overrides</span>
-<span class="prompt">$</span> <span class="cmd-name">sshift doctor --fix</span></code></pre>
-            </article>
-
-            <article class="scenario">
-              <h3>Change an identity</h3>
-              <p>Change your email or key in the same wizard. Failed configuration writes recover automatically.</p>
-              <span class="zh">换邮箱或 key？在同一个向导里修改。配置写入失败时自动恢复。</span>
-              <pre class="mini-code"><code><span class="prompt">$</span> <span class="cmd-name">sshift add --edit github-com-personal</span>
-? Commit email → new@example.com
-<span class="success">✓ Identity updated and routing activated.</span>
-
-<span class="prompt">$</span> <span class="cmd-name">sshift rm github-com-personal</span>
-<span class="success">✓ Routing removed. SSH key files kept.</span></code></pre>
-            </article>
-          </div>
-        </section>
-
-        <section id="safety" aria-labelledby="safety-title">
-          <div class="section-title">
-            <h2 id="safety-title">Safety guarantees</h2>
-            <p>
-              SSH keys are sensitive. sshift keeps private key handling entirely in native OpenSSH.
-              <span class="zh">SSH key 很敏感。sshift 只维护配置，私钥处理仍然交给原生 OpenSSH。</span>
-            </p>
-          </div>
-
-          <ul class="safety-grid">
-            <li>Never uploads keys<span class="zh">永不上传 key</span></li>
-            <li>Never reads private key content<span class="zh">永不读取私钥内容</span></li>
-            <li>Only records file paths<span class="zh">只记录路径</span></li>
-            <li>Fingerprints from public keys only<span class="zh">指纹仅来自公钥</span></li>
-            <li>Backup before every write<span class="zh">每次写入前备份</span></li>
-            <li>Automatic recovery on write failure<span class="zh">写入失败自动恢复</span></li>
-            <li>Only edits its own managed block<span class="zh">只改自己的受管理块</span></li>
-            <li>Native OpenSSH + Git only<span class="zh">只用原生 SSH 和 Git</span></li>
-          </ul>
+          <dl class="command-list">
+            <div class="command-row">
+              <dt><code>sshift add</code></dt>
+              <dd>Add a Git identity, choose or generate an SSH key, and set your commit name and email.<span class="zh" lang="zh-CN">添加 Git 身份，选择或生成 SSH key，设置提交姓名和邮箱。</span>
+                <div class="option-description"><code>sshift add --edit &lt;name&gt;</code><p>Edit an existing identity using the same wizard.<span class="zh" lang="zh-CN">修改已有身份，还是同一个向导。</span></p></div>
+              </dd>
+            </div>
+            <div class="command-row">
+              <dt><code>sshift doctor</code></dt>
+              <dd>Check which SSH key and commit identity your current repository uses.<span class="zh" lang="zh-CN">检查当前仓库使用的 SSH key 和 Git 提交身份。</span>
+                <div class="option-description"><code>sshift doctor --fix</code><p>Fix configuration issues or migrate existing repository-level author settings.<span class="zh" lang="zh-CN">修复配置问题，或迁移旧仓库中单独设置的提交身份。</span></p></div>
+              </dd>
+            </div>
+            <div class="command-row">
+              <dt><code>sshift list</code></dt>
+              <dd>Show configured identities, Git hosts, commit authors, and configuration status.<span class="zh" lang="zh-CN">查看已配置的身份、Git 平台、提交作者及配置状态。</span></dd>
+            </div>
+            <div class="command-row">
+              <dt><code>sshift rm &lt;name&gt;</code></dt>
+              <dd>Remove an identity and its routing rules. Your SSH key files won't be deleted.<span class="zh" lang="zh-CN">删除身份及对应的匹配规则，不会删除本地 SSH key 文件。</span></dd>
+            </div>
+          </dl>
+          <p class="hint command-note">Existing repositories with local author overrides may need a one-time <code>sshift doctor --fix</code>.<span class="zh" lang="zh-CN">如果旧仓库单独设置过提交姓名或邮箱，可能需要运行一次 <code>sshift doctor --fix</code>。</span></p>
         </section>
       </main>
 
       <footer>
-        <span>MIT. For developers who juggle multiple Git identities.</span>
+        <span>MIT Licensed · Open Source</span>
         <span>
           <a href="https://github.com/Th1Humble/sshift">GitHub</a>
           ·
