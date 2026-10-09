@@ -1,7 +1,7 @@
 {
   "name": "sshift",
-  "version": "0.1.4",
-  "description": "Use the right SSH key for every Git repo.",
+  "version": "0.2.0",
+  "description": "Use the right SSH key and commit author for every Git repo.",
   "type": "module",
   "bin": {
     "sshift": "./src/index.ts"

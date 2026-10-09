@@ -2,27 +2,17 @@
 
 [English](./README.md)
 
-为每个 Git 仓库使用正确的 SSH key、提交姓名和邮箱。
+**不同平台，用不同身份。**
 
-sshift 帮助开发者管理多个 SSH key，覆盖 GitHub、GitLab 及自定义 Git 主机。它在 `~/.ssh/config` 中写入一个受管理的配置块，让原生的 `git clone`、`git pull`、`git push` 直接生效——无需包装器、无需代理、无运行时开销。
+配置一次身份，sshift 就会为匹配的仓库使用对应的 SSH key、提交姓名和邮箱。之后照常使用 Git。
 
-sshift 绝不上传、存储或读取你的 SSH 私钥内容。
+## 解决什么问题
 
-## 为什么需要 sshift
+- **添加平台，不用重新配置。** GitHub 已经配好了？直接添加 GitLab 或公司 Git 服务，不用重新折腾现有配置。
+- **使用正确的提交身份。** 个人项目用私人邮箱，公司项目用工作邮箱。不用每次提交前手动切换 Git 配置。
+- **使用对应的 SSH key。** 不同 Git 平台使用各自的 SSH key。同一个平台有多个账号，也可以通过 SSH 别名区分。
 
-很多开发者同时使用多个 Git 平台：
-
-- 公司的 Git 平台，使用公司 SSH key
-- 个人的 GitHub 账号，使用个人 SSH key
-- 内部 Git 服务器，又是另一个 key
-
-OpenSSH 本身支持通过 `~/.ssh/config` 将不同主机路由到不同 key。但配置格式繁琐、容易出错，出了 `Permission denied (publickey)` 也很难排查。
-
-sshift 让正确的做法变简单：
-
-1. 添加一个身份（平台 + 账号 + key + 提交姓名和邮箱）
-2. sshift 自动配置 SSH 访问和 Git 作者匹配
-3. 你继续正常使用 `git clone git@github.com:...`
+sshift 不上传、不存储、不读取 SSH 私钥内容。
 
 ## 安装
 
@@ -50,13 +40,13 @@ curl -fsSL https://th1humble.github.io/sshift/install.sh | INSTALL_DIR=/usr/loca
 指定版本安装：
 
 ```bash
-curl -fsSL https://th1humble.github.io/sshift/install.sh | SSHIFT_VERSION=v0.1.4 sh
+curl -fsSL https://th1humble.github.io/sshift/install.sh | SSHIFT_VERSION=v0.2.0 sh
 ```
 
 也可以从 [GitHub Releases](https://github.com/Th1Humble/sshift/releases) 下载独立二进制：
 
 ```bash
-tar -xzf sshift-v0.1.4-darwin-arm64.tar.gz
+tar -xzf sshift-v0.2.0-darwin-arm64.tar.gz
 chmod +x sshift
 sudo mv sshift /usr/local/bin/sshift
 ```

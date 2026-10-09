@@ -2,27 +2,19 @@
 
 [中文文档](./README.zh-CN.md)
 
-Use the right SSH key and commit author for every Git repo.
+**The right key. The right commit author.**
 
-sshift helps developers manage multiple SSH keys across GitHub, GitLab, and custom Git hosts. It writes a managed block into `~/.ssh/config` so native `git clone`, `git pull`, and `git push` just work — no wrappers, no agents, no runtime overhead.
+Different platforms. Different identities.
+
+Set up each Git identity once. sshift handles SSH keys and commit author settings for matching repositories, so you can keep using Git as usual.
+
+## What sshift solves
+
+- **Add another Git host without starting over.** Already using GitHub? Add GitLab or your company's Git server without changing what already works.
+- **Use the right commit identity.** Personal projects use your personal email. Work repositories use your work email. No need to switch Git configs before every commit.
+- **Use the right SSH key.** Each Git host gets its own SSH key. Need multiple accounts on the same platform? Use separate SSH aliases.
 
 sshift never uploads, stores, or reads your private SSH key content.
-
-## Why
-
-Many developers work with more than one Git host:
-
-- A company Git server with a company SSH key
-- A personal GitHub account with a personal SSH key
-- An internal Git server with yet another key
-
-OpenSSH already supports routing different hosts to different keys via `~/.ssh/config`. But the configuration is fiddly, easy to get wrong, and painful to debug when `Permission denied (publickey)` appears with no further explanation.
-
-sshift makes the safe path easy:
-
-1. Add a profile (host + account + key)
-2. sshift writes the SSH config for you
-3. You keep using `git clone git@github.com:...` as normal
 
 ## Install
 
@@ -50,13 +42,13 @@ curl -fsSL https://th1humble.github.io/sshift/install.sh | INSTALL_DIR=/usr/loca
 To pin a version:
 
 ```bash
-curl -fsSL https://th1humble.github.io/sshift/install.sh | SSHIFT_VERSION=v0.1.4 sh
+curl -fsSL https://th1humble.github.io/sshift/install.sh | SSHIFT_VERSION=v0.2.0 sh
 ```
 
 Or download a standalone binary from [GitHub Releases](https://github.com/Th1Humble/sshift/releases):
 
 ```bash
-tar -xzf sshift-v0.1.4-darwin-arm64.tar.gz
+tar -xzf sshift-v0.2.0-darwin-arm64.tar.gz
 chmod +x sshift
 sudo mv sshift /usr/local/bin/sshift
 ```
